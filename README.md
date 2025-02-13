@@ -1,6 +1,5 @@
 # Miles Tree Map
 
-![Miles Tree Map]()
 *A fully responsive Tree Map visualization with infinite drill-down, built for React.*
 
 ## 📦 Installation
