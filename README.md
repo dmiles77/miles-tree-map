@@ -81,4 +81,4 @@ export default App;
 
 ## 📜 License
 
-MIT License © 2024 [dmiles77](https://github.com/dmiles77)
+MIT License © 2025 [dmiles77](https://github.com/dmiles77)
