@@ -1,6 +1,6 @@
 {
   "name": "miles-tree-map",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A fully responsive tree map visualization with infinite drill-down.",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
@@ -13,7 +13,13 @@
     "build": "rollup -c",
     "prepare": "npm run build"
   },
-  "keywords": ["tree map", "react", "data visualization", "treemap", "hierarchical"],
+  "keywords": [
+    "tree map",
+    "react",
+    "data visualization",
+    "treemap",
+    "hierarchical"
+  ],
   "author": "Daniel Miles",
   "license": "MIT",
   "repository": {
