@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+      "outDir": "dist",
+      "declaration": true,
+      "declarationMap": true,
+      "module": "ESNext",
+      "target": "ESNext",
+      "jsx": "react-jsx",
+      "moduleResolution": "node",
+      "strict": true,
+      "skipLibCheck": true,
+      "resolveJsonModule": true,
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "declarationDir": "dist",
+      "noEmitOnError": false
+    },
+    "include": ["src"],
+    "exclude": ["node_modules", "dist", "**/*.scss"]
+  }
+  
