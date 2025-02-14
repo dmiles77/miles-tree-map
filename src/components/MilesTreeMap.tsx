@@ -6,8 +6,10 @@ interface TreeNode {
   id?: string;
   name: string;
   value: number;
+  color?: string;
   extraProps?: Record<string, any>;
   children?: TreeNode[];
+  parent?: TreeNode;
 }
 
 interface MilesTreeMapProps {
@@ -32,21 +34,23 @@ const generateId = (parentId: string, name: string): string => {
   return `${parentId}-${name.replace(/\s+/g, "_")}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
-const preprocessTree = (node: TreeNode, level = 0, parentId = "root"): TreeNode => {
+const preprocessTree = (node: TreeNode, level = 0, parentId = "root", parentNode?: TreeNode): TreeNode => {
   const id = node.id || generateId(parentId, node.name);
-  return {
+  const processedNode: TreeNode = {
     ...node,
     id,
     extraProps: node.extraProps || {},
-    children: node.children ? node.children.map((child) => preprocessTree(child, level + 1, id)) : [],
+    parent: parentNode,
+    children: node.children ? [] : undefined
   };
-};
 
-const renderNodeContent = (node: TreeNode, renderComponent?: (node: TreeNode) => React.ReactElement, minCustomComponentSize?: number, sizePercentage?: number) => {
-  if (sizePercentage !== undefined && sizePercentage >= (minCustomComponentSize || 0) && renderComponent) {
-    return renderComponent(node);
+  if (node.children) {
+    processedNode.children = node.children.map((child) => 
+      preprocessTree(child, level + 1, id, processedNode)
+    );
   }
-  return defaultNodeComponent(node);
+
+  return processedNode;
 };
 
 const defaultNodeComponent = (node: TreeNode) => (
@@ -54,6 +58,13 @@ const defaultNodeComponent = (node: TreeNode) => (
     <span className="node-text">{node.name} ({node.value})</span>
   </div>
 );
+
+const renderNodeContent = (node: TreeNode, renderComponent?: (node: TreeNode) => React.ReactElement, minCustomComponentSize?: number, sizePercentage?: number) => {
+  if (sizePercentage !== undefined && sizePercentage >= (minCustomComponentSize || 0) && renderComponent) {
+    return renderComponent(node);
+  }
+  return defaultNodeComponent(node);
+};
 
 const interpolateColor = (value: number, min: number, max: number, colorRange: [string, string]) => {
   const percentage = (value - min) / (max - min);
@@ -76,7 +87,7 @@ const MilesTreeMap = ({
   tooltipEnabled = true,
   minCustomComponentSize = 50,
 }: MilesTreeMapProps): React.ReactElement => {
-  const [tree, setTree] = useState<TreeNode>(preprocessTree(data));
+  const tree = preprocessTree(data);
   const [currentNode, setCurrentNode] = useState<TreeNode>(tree);
   
   const handleNodeClick = (node: TreeNode) => {

@@ -1,0 +1,41 @@
+.breadcrumb {
+  padding: 10px;
+  background: #f5f5f5;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .path {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .crumb {
+    cursor: pointer;
+    color: #007bff;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .separator {
+    color: #666;
+  }
+
+  button {
+    padding: 5px 10px;
+    border: none;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.3s;
+
+    &:hover {
+      background: #0056b3;
+    }
+  }
+} 
