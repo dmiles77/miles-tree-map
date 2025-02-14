@@ -1,6 +1,6 @@
 {
   "name": "miles-tree-map",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A fully responsive tree map visualization with infinite drill-down.",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
