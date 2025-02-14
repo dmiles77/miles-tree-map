@@ -725,9 +725,8 @@ function requireJsxRuntime () {
 
 var jsxRuntimeExports = requireJsxRuntime();
 
-const MilesTreeMap = ({ data, renderComponent, colorRange = ['#ff0000', '#00ff00'], onNodeClick, animationDuration = 300, breadcrumbEnabled = true, backButtonEnabled = true, backButtonPosition = 'top-left', padding = 5, borderRadius = 5, minDisplayValue = 0, defaultZoomLevel = 1, fontSizeScale = 1, tooltipEnabled = true, minCustomComponentSize = 50, }) => {
-    // Component implementation here
-    return jsxRuntimeExports.jsx("div", { children: "hello" });
+const MilesTreeMap = () => {
+    return jsxRuntimeExports.jsx("div", { children: "Hello" });
 };
 
 export { MilesTreeMap };
