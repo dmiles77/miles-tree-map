@@ -1,11 +1,2 @@
-node_modules/
-.DS_Store
-*.log
-.vscode/
-.env
-.idea/
-*.lock
-coverage/
-.npm/
-rollup.cache.json
-package-lock.json
+node_modules
+dist
