@@ -1,3 +1,1 @@
-export const MilesTreeMap = () => {
-    return "Hello World!"
-}
+export { MilesTreeMap } from './components/MilesTreeMap';
