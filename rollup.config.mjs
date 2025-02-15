@@ -1,37 +1,25 @@
-// rollup.config.mjs
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import typescript from '@rollup/plugin-typescript';
-import dts from 'rollup-plugin-dts';
+import resolve from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
+import typescript from "@rollup/plugin-typescript";
 
-export default [
-  {
-    input: 'src/MilesTreeMap.tsx',
-    output: [
-      {
-        file: 'dist/index.js',
-        format: 'cjs',
-        sourcemap: true
-      },
-      {
-        file: 'dist/index.es.js',
-        format: 'es',
-        sourcemap: true
-      }
-    ],
-    external: ['react', 'react-dom'],
-    plugins: [
-      resolve(),
-      commonjs(),
-      typescript()
-    ]
-  },
-  {
-    input: 'dist/index.d.ts',
-    output: {
-      file: 'dist/index.d.ts',
-      format: 'es'
+export default {
+  input: "src/index.tsx",
+  output: [
+    {
+      file: "dist/index.js",
+      format: "cjs",
+      sourcemap: true
     },
-    plugins: [dts()]
-  }
-];
+    {
+      file: "dist/index.esm.js",
+      format: "esm",
+      sourcemap: true
+    }
+  ],
+  external: ["react", "react-dom"],
+  plugins: [
+    resolve(),
+    commonjs(),
+    typescript()
+  ]
+};
