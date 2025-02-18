@@ -1,6 +1,6 @@
 {
   "name": "miles-tree-map",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "A simple React tree map component",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
