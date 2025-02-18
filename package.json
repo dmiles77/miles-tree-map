@@ -1,11 +1,13 @@
 {
   "name": "miles-tree-map",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "A simple React tree map component",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -18,7 +20,11 @@
     "build": "rollup -c",
     "prepare": "npm run build"
   },
-  "keywords": ["react", "tree-map", "component"],
+  "keywords": [
+    "react",
+    "tree-map",
+    "component"
+  ],
   "author": "Daniel Miles",
   "license": "MIT",
   "peerDependencies": {
