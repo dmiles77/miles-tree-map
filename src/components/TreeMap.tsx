@@ -40,7 +40,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   colorRangeBehavior = "oneColor",
   onNodeClick,
   animationDuration = 300,
-  breadcrumbEnabled,
+  breadcrumbEnabled = true,
   backButtonEnabled,
   paddingInner = 1,
   paddingOuter = 50,
