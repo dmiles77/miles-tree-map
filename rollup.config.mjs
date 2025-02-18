@@ -21,5 +21,8 @@ export default {
     resolve(),
     commonjs(),
     typescript()
-  ]
+  ],
+  treeshake: {
+    moduleSideEffects: false
+  }
 };
