@@ -1,6 +1,7 @@
 # Miles Tree Map
 
-A powerful and customizable TreeMap visualization component for React, featuring infinite drill-down capabilities, smooth animations, and extensive customization options.
+A powerful and customizable TreeMap visualization component for React, featuring infinite drill-down capabilities, smooth animations, and extensive customization options. This component is not just a chart, it's a responsive layout that can render custom components within each node, providing a dynamic and interactive user experience.
+basically render any thing you want based on the data structure.
 
 ## 📦 Installation
 
@@ -18,6 +19,8 @@ yarn add miles-tree-map
 ```
 
 ## 🚀 Usage
+
+Here's an example of how to use the TreeMap component in a React application:
 
 ```tsx
 import React from "react";
@@ -182,6 +185,9 @@ const Example: react.FC = () => {
 }
 
 ```
+In this example, the worldMap object represents the hierarchical data structure to be visualized. The TreeMap component renders this data, providing an interactive and responsive layout.
+
+Note: The TreeNode interface defines the structure of each node in the tree, including properties like id, name, value, children, and customData.
 
 
 ## 🔧 Props
@@ -222,45 +228,104 @@ Available `customTooltipPosition` options:
 ## 🎯 Custom Components
 
 ### Custom Node Component
-tsx
-interface ICustomNodeProps {
-node: TreeNode;
-width: number;
-height: number;
-backgroundColor: string;
-handleBack: (index: number) => void;
-history: Array<{ node: TreeNode; position: Position }>;
-}
-const CustomNode: React.FC<ICustomNodeProps> = (props) => {
-// Your custom node implementation here you can use props from the TreeMap Node
+
+To render custom content within each node, you can provide a renderComponent prop to the TreeMap component. This prop should be a function that returns a JSX element.
+
+```tsx
+import React from "react";
+import { TreeMap, TreeNode, CustomNodeProps } from "miles-tree-map";
+
+const CustomNode: React.FC<CustomNodeProps> = ({ node, width, height, backgroundColor }) => (
+  <div style={{ width, height, backgroundColor, padding: '5px', boxSizing: 'border-box' }}>
+    <strong>{node.name}</strong>
+    {node.customData && <p>{node.customData.description}</p>}
+  </div>
+);
+
+const data: TreeNode = {
+  id: "root",
+  name: "Root",
+  children: [
+    {
+      id: "child1",
+      name: "Child 1",
+      value: 10,
+      customData: { description: "This is child 1" }
+    },
+    {
+      id: "child2",
+      name: "Child 2",
+      value: 20,
+      customData: { description: "This is child 2" }
+    }
+  ]
 };
 
+const App: React.FC = () => (
+  <TreeMap data={data} renderComponent={CustomNode} />
+);
+
+export default App;
+
+```
 
 ### Custom Tooltip Component
 
-tsx
-interface TooltipData {
-node: TreeNode;
-mousePosition: { x: number; y: number };
-containerBounds: DOMRect;
-nodePosition: Position;
+For a customized tooltip, you can provide a renderTooltip prop to the TreeMap component. This prop should be a function that returns a JSX element representing the tooltip.
+
+```tsx
+interface ICustomTooltipProps {
+  node: TreeNode;
+  position?: XYPosition;
 }
-const CustomTooltip: React.FC<{ data: TooltipData; style: React.CSSProperties }> = (props) => {
-// Your custom tooltip implementation
-};
+```
+
+```tsx
+      <TreeMap
+        data={data}
+        tooltipComponentRender={(customTooltipProps: ICustomTooltipProps) => {
+          const { node, position } = customTooltipProps;
+          console.log(node, position);
+          return (
+            <>
+            <strong>{node.name} 1111</strong> <br />
+            {node.customData && (
+              <pre style={{ margin: "0", whiteSpace: "pre-wrap" }}>
+                {JSON.stringify(node.customData, null, 2)}
+              </pre>
+              )}
+            </>
+          );
+        }}
+      />
+```
+
+Here, CustomTooltip is a component that receives TooltipData and styles, rendering the node's customData within a styled tooltip. The renderTooltip prop is set to a function that returns this CustomTooltip component.
+
+## 🛠️ Underlying Libraries
+
+The miles-tree-map component leverages several libraries to provide its functionality:
+
+React: A JavaScript library for building user interfaces, enabling the creation of reusable UI components.
+
+D3.js: A powerful library for producing dynamic, interactive data visualizations in web browsers. Specifically, miles-tree-map utilizes the d3-hierarchy module, which offers tools for visualizing hierarchical data structures, such as treemaps. 
+
+TypeScript: A statically typed superset of JavaScript that compiles to plain JavaScript, providing optional static typing and class-based object-oriented programming.
+
+By combining these technologies, miles-tree-map offers a robust and flexible solution for rendering interactive and customizable treemap visualizations in React applications.
 
 
 ## 📊 Data Structure
 
-typescript
+```tsx
 interface TreeNode {
-id: string;
-name: string;
-value?: number;
-children?: TreeNode[];
-customData?: Record<string, unknown>;
+  id: string;
+  name: string;
+  value?: number;
+  children?: TreeNode[];
+  customData?: Record<string, unknown>;
 }
-
+```
 
 ## 🌟 Features
 
@@ -274,6 +339,14 @@ customData?: Record<string, unknown>;
 - Back navigation
 - Flexible positioning system
 - Rich customization options
+
+For more information and access to the source code, visit the [GitHub repository](https://github.com/dmiles77/miles-tree-map)
+
+Note: Ensure that your project meets the peer dependency requirements for React and TypeScript to utilize miles-tree-map effectively.
+
+## Support
+
+[Email](danielmiles89@gmail.com)
 
 ## 📜 License
 
