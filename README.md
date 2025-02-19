@@ -207,7 +207,7 @@ Note: The TreeNode interface defines the structure of each node in the tree, inc
 | `minDisplayValue` | `number` | `0` | Minimum value for node display |
 | `tooltipEnabled` | `boolean` | `true` | Enable hover tooltips |
 | `customTooltipPosition` | `TooltipPosition` | `'mouseRight'` | Tooltip positioning |
-| `renderTooltip` | `(data: TooltipData, style: CSSProperties) => JSX.Element` | `undefined` | Custom tooltip component |
+| `tooltipComponentRender` | `(ICustomTooltipProps) => JSX.Element` | `undefined` | Custom tooltip component |
 
 ## 🎨 Color Range Behaviors
 
@@ -346,7 +346,7 @@ Note: Ensure that your project meets the peer dependency requirements for React 
 
 ## Support
 
-[Email](danielmiles89@gmail.com)
+Found a bug or want to add a feature? let me know please: danielmiles89@gmail.com
 
 ## 📜 License
 
