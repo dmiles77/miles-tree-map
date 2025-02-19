@@ -279,4 +279,6 @@ customData?: Record<string, unknown>;
 
 MIT License © 2025 [dmiles77](https://github.com/dmiles77)
 
+Have fun!
+
 
