@@ -39,3 +39,8 @@ export interface XYPosition {
   y: number;
 }
 
+export interface ITooltip {
+  x: number;
+  y: number;
+  data: TreeNode;
+}

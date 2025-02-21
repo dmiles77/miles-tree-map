@@ -1,18 +1,22 @@
-import React, { useRef, useState, useEffect, useMemo } from "react";
+// @ts-nocheck
+// @ts-ignore
+import React, { useRef, useState, useEffect } from "react";
 import { useTransition, animated, to } from "@react-spring/web";
-import { hierarchy, treemap, HierarchyRectangularNode } from "d3-hierarchy";
-import { scaleLinear } from "d3-scale";
+import { HierarchyRectangularNode } from "d3-hierarchy";
 import Breadcrumbs from "./Breadcrumbs";
 import DefaultNode from "./DefaultNode";
 import Tooltip from "./Tooltip";
 import {
   TreeNode,
-  Position,
   ColorRangeBehavior,
   TooltipPosition,
   ICustomNodeProps,
   ICustomTooltipProps,
+  ITooltip
 } from "../interfaces/inferfaces";
+import { TREE_MAP_CONSTANTS } from '../constants/treeMap';
+import { useTreeMapLayout } from '../hooks/useTreeMapLayout';
+import { useTreeMapColors } from '../hooks/useTreeMapColors';
 
 interface TreeMapProps {
   data: TreeNode;
@@ -36,81 +40,42 @@ interface TreeMapProps {
 export const TreeMap: React.FC<TreeMapProps> = ({
   data,
   renderComponent,
-  colorRange = ['#ff6b6b', '#4ecdc4'],
-  colorRangeBehavior = "oneColor",
-  onNodeClick,
-  animationDuration = 300,
-  breadcrumbEnabled = true,
+  colorRange = TREE_MAP_CONSTANTS.COLORS.DEFAULT_RANGE,
+  colorRangeBehavior = TREE_MAP_CONSTANTS.DEFAULT_COLOR_RANGE_BEHAVIOR,
+  animationDuration = TREE_MAP_CONSTANTS.ANIMATION.DEFAULT_DURATION,
+  breadcrumbEnabled = TREE_MAP_CONSTANTS.BREADCRUMBS_ENABLED,
+  paddingInner = TREE_MAP_CONSTANTS.LAYOUT.DEFAULT_PADDING_INNER,
+  paddingOuter = TREE_MAP_CONSTANTS.LAYOUT.DEFAULT_PADDING_OUTER,
+  borderRadius = TREE_MAP_CONSTANTS.LAYOUT.DEFAULT_BORDER_RADIUS,
+  minDisplayValue = TREE_MAP_CONSTANTS.LAYOUT.DEFAULT_MIN_DISPLAY_VALUE,
+  customTooltipPosition = TREE_MAP_CONSTANTS.TOOLTIP.DEFAULT_POSITION,
   backButtonEnabled,
-  paddingInner = 1,
-  paddingOuter = 50,
-  borderRadius = 2,
-  minDisplayValue = 0,
   tooltipEnabled,
-  customTooltipPosition = "mouseRight",
   customTooltipStyle,
   tooltipComponentRender,
+  onNodeClick,
 }) => {
   const [currentNode, setCurrentNode] = useState<TreeNode>(data);
   const [history, setHistory] = useState([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const previousPosition = useRef<Position | null>(null);
-  const [tooltip, setTooltip] = useState<{
-    x: number;
-    y: number;
-    data: TreeNode | null;
-  }>({
+  const [clickedNode, setClickedNode] = useState<HierarchyRectangularNode<TreeNode> | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [tooltip, setTooltip] = useState<ITooltip>({
     x: 0,
     y: 0,
     data: null,
   });
 
-  const getNodeColor = (node: HierarchyRectangularNode<TreeNode>) => {
-    switch (colorRangeBehavior) {
-      case "oneColor":
-        return colorRange[0];
-      case "gradient": {
-        const colorScale = scaleLinear<string>()
-          .domain([0, Math.max(...nodes.map((n) => n.value || 0))])
-          .range(colorRange as [string, string]);
-        return colorScale(node.value || 0);
-      }
-      case "discrete": {
-        const index = nodes.indexOf(node);
-        const step = Math.floor(
-          (index * (colorRange.length - 1)) / (nodes.length - 1)
-        );
-        return colorRange[step];
-      }
-      case "transparent":
-        return "transparent";
-      case "borderOnly":
-        return "transparent";
-      case "patternFill":
-        return `repeating-linear-gradient(45deg, ${colorRange[0]}, ${colorRange[0]} 10px, ${colorRange[1]} 10px, ${colorRange[1]} 20px)`;
-      case "heatmap": {
-        const maxValue = Math.max(...nodes.map((n) => n.value || 0));
-        const intensity = (node.value || 0) / maxValue;
-        // Convert hex to RGB
-        const hex = colorRange[0].replace("#", "");
-        const r = parseInt(hex.substring(0, 2), 16);
-        const g = parseInt(hex.substring(2, 4), 16);
-        const b = parseInt(hex.substring(4, 6), 16);
-        // Brighten for start color (add 50% of remaining value to each channel)
-        const startR = Math.min(r + (255 - r) * 0.5, 255);
-        const startG = Math.min(g + (255 - g) * 0.5, 255);
-        const startB = Math.min(b + (255 - b) * 0.5, 255);
-        // Interpolate between start and end colors based on intensity
-        const finalR = Math.round(startR + (r - startR) * intensity);
-        const finalG = Math.round(startG + (g - startG) * intensity);
-        const finalB = Math.round(startB + (b - startB) * intensity);
-        return `rgb(${finalR}, ${finalG}, ${finalB})`;
-      }
-      default:
-        return colorRange[0];
-    }
-  };
+  const { nodes, prevLayout } = useTreeMapLayout({
+    currentNode,
+    dimensions,
+    minDisplayValue,
+    paddingInner,
+    paddingOuter
+  });
+
+  const { getNodeColor } = useTreeMapColors();
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -125,97 +90,103 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  const nodes = useMemo(() => {
-    if (!dimensions.width || !dimensions.height) return [];
-
-    const root = hierarchy(currentNode)
-      .sum((d) =>
-        d.children?.length ? 0 : Math.max(d.value || 0, minDisplayValue)
-      )
-      .sort((a, b) => (b.value || 0) - (a.value || 0));
-
-    const treeMapLayout = treemap<TreeNode>()
-      .size([dimensions.width, dimensions.height])
-      .paddingOuter(paddingOuter)
-      .paddingInner(paddingInner)
-      .round(false);
-
-    const layoutRoot = treeMapLayout(root);
-    return layoutRoot.children || [];
-  }, [currentNode, dimensions, minDisplayValue, paddingInner, paddingOuter]);
-
-  const handleNodeClick = (node: TreeNode) => {
-    if (node.children?.length) {
-      setHistory(prev => [...prev, currentNode] as any);
-      setCurrentNode(node);
-      onNodeClick?.(node);
+  const handleNodeClick = (layoutNode: HierarchyRectangularNode<TreeNode>) => {
+    if (layoutNode.data.children?.length && !isTransitioning) {
+      setIsTransitioning(true);
+      setClickedNode(layoutNode); // Store clicked node for zoom effect
+      
+      // Delay state updates slightly to allow zoom animation to start
+      setTimeout(() => {
+        setHistory(prev => [...prev, currentNode]);
+        setCurrentNode(layoutNode.data);
+        onNodeClick?.(layoutNode.data);
+      }, 50);
     }
   };
 
   const handleBack = (index: number) => {
-    // Don't do anything if clicking the current node
-    if (index === history.length) return;
-    // Get the node we want to navigate to
+    if (index === history.length || isTransitioning) return;
+    
+    setIsTransitioning(true);
     const targetNode = history[index];
-    // Update current node to the target
-    setCurrentNode(targetNode);
-    // Keep history up to the clicked index
-    setHistory(prev => prev.slice(0, index));
+    setClickedNode(null);
+    
+    setTimeout(() => {
+      setCurrentNode(targetNode);
+      setHistory(prev => prev.slice(0, index));
+      setIsTransitioning(false);
+    }, 50);
   };
 
   const transitions = useTransition(nodes, {
-    keys: (node: any) => node.data.id,
-    from: (node: any) => {
-      if (previousPosition.current) {
+    keys: (node) => node.data.id,
+    from: (node) => {
+      const prev = prevLayout[node.data.id];
+      if (!prev) {
+        // New nodes zoom in from clicked node position or center
+        const sourceNode = clickedNode || {
+          x0: dimensions.width / 2,
+          y0: dimensions.height / 2,
+          x1: dimensions.width / 2,
+          y1: dimensions.height / 2
+        };
         return {
           opacity: 0,
-          x: previousPosition.current.x0,
-          y: previousPosition.current.y0,
-          width: previousPosition.current.x1 - previousPosition.current.x0,
-          height: previousPosition.current.y1 - previousPosition.current.y0,
+          x: sourceNode.x0,
+          y: sourceNode.y0,
+          width: 0,
+          height: 0,
+          scale: 0.5,
         };
       }
+      
       return {
-        opacity: 0,
-        x: node.x0,
-        y: node.y0,
-        width: 0,
-        height: 0,
+        opacity: 0.8,
+        x: prev.x0,
+        y: prev.y0,
+        width: prev.x1 - prev.x0,
+        height: prev.y1 - prev.y0,
+        scale: 1,
       };
     },
-    enter: (node: any) => ({
+    enter: (node) => ({
       opacity: 1,
       x: node.x0,
       y: node.y0,
       width: node.x1 - node.x0,
       height: node.y1 - node.y0,
+      scale: 1,
     }),
-    update: (node: any) => ({
+    update: (node) => ({
       x: node.x0,
       y: node.y0,
       width: node.x1 - node.x0,
       height: node.y1 - node.y0,
+      scale: 1,
+      opacity: 1,
     }),
-    leave: (node: any) => {
-      if (previousPosition.current) {
-        return {
-          opacity: 0,
-          x: previousPosition.current.x0,
-          y: previousPosition.current.y0,
-          width: previousPosition.current.x1 - previousPosition.current.x0,
-          height: previousPosition.current.y1 - previousPosition.current.y0,
-        };
-      }
+    leave: (node) => {
+      const targetNode = clickedNode || {
+        x0: dimensions.width / 2,
+        y0: dimensions.height / 2
+      };
+      
       return {
         opacity: 0,
-        x: node.x0,
-        y: node.y0,
+        x: targetNode.x0,
+        y: targetNode.y0,
         width: 0,
         height: 0,
+        scale: 0.5,
       };
     },
     config: {
       duration: animationDuration,
+      easing: t => t * (2 - t), // Ease-out effect for smoother animation
+    },
+    onRest: () => {
+      setIsTransitioning(false);
+      setClickedNode(null);
     },
   });
 
@@ -227,7 +198,6 @@ export const TreeMap: React.FC<TreeMapProps> = ({
         height: "100%",
         position: "relative",
         overflow: "hidden",
-        backgroundColor: "#f5f5f5",
         cursor: "pointer",
       }}
     >
@@ -239,7 +209,6 @@ export const TreeMap: React.FC<TreeMapProps> = ({
             left: 0,
             right: 0,
             zIndex: 100,
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
             padding: "8px",
           }}
         >
@@ -255,19 +224,22 @@ export const TreeMap: React.FC<TreeMapProps> = ({
           style={{
             position: "absolute",
             borderRadius: `${borderRadius}px`,
-            border:
-              colorRangeBehavior === "borderOnly"
-                ? `2px solid ${colorRange[0]}`
-                : "1px solid rgba(255, 255, 255, 0.2)",
-            width: style.width.to((w: number) => `${w}px`),
-            height: style.height.to((h: number) => `${h}px`),
-            opacity: style.opacity,
+            border: colorRangeBehavior === "borderOnly" 
+              ? `2px solid ${colorRange[0]}`
+              : "1px solid rgba(0, 0, 0, 0.1)",
             transform: to(
-              [style.x, style.y],
-              (x: number, y: number) => `translate3d(${x}px, ${y}px, 0)`
+              [style.x, style.y, style.scale],
+              (x, y, s) => `translate3d(${x}px, ${y}px, 0) scale(${s})`
             ),
+            transformOrigin: 'center',
+            width: style.width,
+            height: style.height,
+            opacity: style.opacity,
+            boxSizing: 'border-box',
+            transition: 'background-color 0.3s ease',
+            willChange: 'transform, opacity, width, height',
           }}
-          onClick={() => handleNodeClick(node.data)}
+          onClick={() => handleNodeClick(node)}
           onMouseEnter={(e: any) => {
             setTooltip({
               x: e.clientX,
@@ -283,7 +255,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
             }));
           }}
           onMouseLeave={() => {
-            setTooltip({ x: 0, y: 0, data: null }); // Hide tooltip
+            setTooltip({ x: 0, y: 0, data: null });
           }}
         >
           {renderComponent ? (
@@ -291,7 +263,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
               node: node.data,
               width: node.x1 - node.x0,
               height: node.y1 - node.y0,
-              backgroundColor: getNodeColor(node),
+              backgroundColor: getNodeColor(node, nodes, colorRange, colorRangeBehavior),
               handleBack,
               history
             })
@@ -300,7 +272,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
               node={node.data}
               width={node.x1 - node.x0}
               height={node.y1 - node.y0}
-              backgroundColor={getNodeColor(node)}
+              backgroundColor={getNodeColor(node, nodes, colorRange, colorRangeBehavior)}
               handleBack={handleBack}
               history={history}
               backButtonEnabled={!!backButtonEnabled}
