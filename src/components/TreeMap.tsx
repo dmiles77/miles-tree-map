@@ -1,5 +1,4 @@
 // @ts-nocheck
-// @ts-ignore
 import React, { useRef, useState, useEffect } from "react";
 import { useTransition, animated, to } from "@react-spring/web";
 import { HierarchyRectangularNode } from "d3-hierarchy";
