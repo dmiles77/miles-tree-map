@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useRef, useState, useEffect } from "react";
 import { useTransition, animated, to } from "@react-spring/web";
 import { HierarchyRectangularNode } from "d3-hierarchy";
@@ -100,7 +99,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
       setIsTransitioning(true);
       setClickedNode(layoutNode); // Store clicked node for zoom effect
       // Delay state updates slightly to allow zoom animation to start
-      setHistory(prev => [...prev, currentNode]);
+      setHistory(prev => [...prev, currentNode] as any);
       setCurrentNode(layoutNode.data);
     }
     onNodeClick?.(layoutNode.data);
