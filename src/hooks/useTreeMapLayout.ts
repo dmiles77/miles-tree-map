@@ -5,7 +5,6 @@ import { TreeNode } from '../interfaces/inferfaces';
 interface UseTreeMapLayoutProps {
   currentNode: TreeNode;
   dimensions: { width: number; height: number };
-  minDisplayValue: number;
   paddingInner: number;
   paddingOuter: number;
 }
@@ -22,7 +21,6 @@ interface LayoutCache {
 export const useTreeMapLayout = ({
   currentNode,
   dimensions,
-  minDisplayValue,
   paddingInner,
   paddingOuter
 }: UseTreeMapLayoutProps) => {
@@ -32,7 +30,7 @@ export const useTreeMapLayout = ({
     if (!dimensions.width || !dimensions.height) return [];
 
     const root = hierarchy(currentNode)
-      .sum((d) => d.children?.length ? 0 : Math.max(d.value || 0, minDisplayValue))
+      .sum((d) => d.children?.length ? 0 : Math.max(d.value || 0))
       .sort((a, b) => (b.value || 0) - (a.value || 0));
 
     const treeMapLayout = treemap<TreeNode>()
@@ -43,7 +41,7 @@ export const useTreeMapLayout = ({
 
     const layoutRoot = treeMapLayout(root);
     return layoutRoot.children || [];
-  }, [currentNode, dimensions, minDisplayValue, paddingInner, paddingOuter]);
+  }, [currentNode, dimensions, paddingInner, paddingOuter]);
 
   useEffect(() => {
     const newLayout: LayoutCache = {};

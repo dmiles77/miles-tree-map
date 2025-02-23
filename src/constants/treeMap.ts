@@ -1,6 +1,6 @@
 export const TREE_MAP_CONSTANTS = {
   COLORS: {
-    DEFAULT_RANGE: ['#ff6b6b', '#4ecdc4'],
+    DEFAULT_RANGE: ['#4ecdc4', '#ff6b6b'],
     BACKGROUND: '#f5f5f5',
     BORDER: 'rgba(0, 0, 0, 0.1)',
     BREADCRUMB_BACKGROUND: 'rgba(255, 255, 255, 0.9)',
@@ -10,10 +10,9 @@ export const TREE_MAP_CONSTANTS = {
     DEFAULT_DURATION: 500
   },
   LAYOUT: {
-    DEFAULT_PADDING_INNER: 1,
+    DEFAULT_PADDING_INNER: 10,
     DEFAULT_PADDING_OUTER: 50,
-    DEFAULT_BORDER_RADIUS: 2,
-    DEFAULT_MIN_DISPLAY_VALUE: 0
+    DEFAULT_BORDER_RADIUS: 2
   },
   TOOLTIP: {
     DEFAULT_POSITION: 'mouseRight' as const
@@ -29,5 +28,6 @@ export const TREE_MAP_CONSTANTS = {
     RANDOM: 'random',
     PATTERN_FILL: 'patternFill',
     HEATMAP: 'heatmap'
-  }
+  },
+  BREADCRUMBS_HEIGHT: 40
 }; 

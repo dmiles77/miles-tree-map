@@ -29,7 +29,6 @@ interface TreeMapProps {
   paddingInner?: number;
   paddingOuter?: number;
   borderRadius?: number;
-  minDisplayValue?: number;
   tooltipEnabled?: boolean;
   customTooltipPosition?: TooltipPosition;
   customTooltipStyle?: React.CSSProperties;
@@ -46,7 +45,6 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   paddingInner = TREE_MAP_CONSTANTS.LAYOUT.DEFAULT_PADDING_INNER,
   paddingOuter = TREE_MAP_CONSTANTS.LAYOUT.DEFAULT_PADDING_OUTER,
   borderRadius = TREE_MAP_CONSTANTS.LAYOUT.DEFAULT_BORDER_RADIUS,
-  minDisplayValue = TREE_MAP_CONSTANTS.LAYOUT.DEFAULT_MIN_DISPLAY_VALUE,
   customTooltipPosition = TREE_MAP_CONSTANTS.TOOLTIP.DEFAULT_POSITION,
   backButtonEnabled,
   tooltipEnabled,
@@ -65,16 +63,24 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     y: 0,
     data: null,
   });
+  const [breadcrumbsHeight, setBreadcrumbsHeight] = useState(0);
+  const breadcrumbRef = useRef<HTMLDivElement>(null);
 
   const { nodes, prevLayout } = useTreeMapLayout({
     currentNode,
     dimensions,
-    minDisplayValue,
     paddingInner,
     paddingOuter
   });
 
   const { getNodeColor } = useTreeMapColors();
+
+  useEffect(() => {
+    if (breadcrumbEnabled && breadcrumbRef.current) {
+      const { height } = breadcrumbRef.current.getBoundingClientRect();
+      setBreadcrumbsHeight(height);
+    }
+  }, [breadcrumbEnabled, dimensions, history]);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -93,14 +99,11 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     if (layoutNode.data.children?.length && !isTransitioning) {
       setIsTransitioning(true);
       setClickedNode(layoutNode); // Store clicked node for zoom effect
-      
       // Delay state updates slightly to allow zoom animation to start
-      setTimeout(() => {
-        setHistory(prev => [...prev, currentNode]);
-        setCurrentNode(layoutNode.data);
-        onNodeClick?.(layoutNode.data);
-      }, 50);
+      setHistory(prev => [...prev, currentNode]);
+      setCurrentNode(layoutNode.data);
     }
+    onNodeClick?.(layoutNode.data);
   };
 
   const handleBack = (index: number) => {
@@ -110,41 +113,51 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     const targetNode = history[index];
     setClickedNode(null);
     
-    setTimeout(() => {
-      setCurrentNode(targetNode);
-      setHistory(prev => prev.slice(0, index));
-      setIsTransitioning(false);
-    }, 50);
+    setCurrentNode(targetNode);
+    setHistory(prev => prev.slice(0, index));
+    setIsTransitioning(false);
+  };
+
+  const getTreeMapBounds = () => {
+    const effectiveTopPadding = breadcrumbEnabled ? 0 : paddingOuter;
+    const verticalSpace = breadcrumbEnabled ? breadcrumbsHeight : 0;
+    
+    return {
+      x: paddingOuter,
+      y: effectiveTopPadding + verticalSpace,
+      width: dimensions.width - (paddingOuter * 2),
+      height: dimensions.height - verticalSpace - (paddingOuter * 2),
+    };
   };
 
   const transitions = useTransition(nodes, {
     keys: (node) => node.data.id,
     from: (node) => {
-      const prev = prevLayout[node.data.id];
-      if (!prev) {
-        // New nodes zoom in from clicked node position or center
-        const sourceNode = clickedNode || {
-          x0: dimensions.width / 2,
-          y0: dimensions.height / 2,
-          x1: dimensions.width / 2,
-          y1: dimensions.height / 2
-        };
-        return {
-          opacity: 0,
-          x: sourceNode.x0,
-          y: sourceNode.y0,
-          width: 0,
-          height: 0,
-          scale: 0.5,
-        };
-      }
+    if (clickedNode) {
+      const bounds = getTreeMapBounds();
+      const parentXScale = clickedNode.x1 - clickedNode.x0;
+      const parentYScale = clickedNode.y1 - clickedNode.y0;
+      
+      // Calculate relative position within clicked node
+      const xOffset = (node.x0 - bounds.x) - clickedNode.x0;
+      const yOffset = (node.y0 - bounds.y) - clickedNode.y0;
       
       return {
-        opacity: 0.8,
-        x: prev.x0,
-        y: prev.y0,
-        width: prev.x1 - prev.x0,
-        height: prev.y1 - prev.y0,
+        opacity: 0,
+        x: clickedNode.x0 + (xOffset * parentXScale / bounds.width),
+        y: clickedNode.y0 + (yOffset * parentYScale / bounds.height),
+        width: (node.x1 - node.x0) * (parentXScale / bounds.width),
+        height: (node.y1 - node.y0) * (parentYScale / bounds.height),
+      };
+    }
+
+      const prev = prevLayout[node.data.id];
+      return {
+        opacity: 0,
+        x: prev?.x0 || node.x0,
+        y: prev?.y0 || node.y0,
+        width: prev ? prev.x1 - prev.x0 : node.x1 - node.x0,
+        height: prev ? prev.y1 - prev.y0 : node.y1 - node.y0,
         scale: 1,
       };
     },
@@ -154,38 +167,47 @@ export const TreeMap: React.FC<TreeMapProps> = ({
       y: node.y0,
       width: node.x1 - node.x0,
       height: node.y1 - node.y0,
-      scale: 1,
     }),
     update: (node) => ({
+      opacity: 1,
       x: node.x0,
       y: node.y0,
       width: node.x1 - node.x0,
       height: node.y1 - node.y0,
       scale: 1,
+    }),
+    leave: { opacity: 0 },
+    config: {
+      duration: animationDuration,
+      easing: t => t * (2 - t),
+    },
+  });
+
+  const expandingNodeTransition = useTransition(clickedNode, {
+    from: (node) => ({
+      x: node?.x0 || 0,
+      y: node?.y0 || 0,
+      width: node ? node.x1 - node.x0 : 0,
+      height: node ? node.y1 - node.y0 : 0,
       opacity: 1,
     }),
-    leave: (node) => {
-      const targetNode = clickedNode || {
-        x0: dimensions.width / 2,
-        y0: dimensions.height / 2
-      };
-      
-      return {
-        opacity: 0,
-        x: targetNode.x0,
-        y: targetNode.y0,
-        width: 0,
-        height: 0,
-        scale: 0.5,
-      };
+    enter: () => ({
+      ...getTreeMapBounds(),
+      opacity: 1,
+    }),
+    leave: { 
+      opacity: 0,
+      config: { 
+        duration: animationDuration / 2 
+      }
     },
     config: {
       duration: animationDuration,
-      easing: t => t * (2 - t), // Ease-out effect for smoother animation
+      easing: t => t * (2 - t),
     },
     onRest: () => {
-      setIsTransitioning(false);
       setClickedNode(null);
+      setIsTransitioning(false);
     },
   });
 
@@ -202,20 +224,56 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     >
       {breadcrumbEnabled && (
         <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 100,
-            padding: "8px",
-          }}
+        ref={breadcrumbRef}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: paddingOuter,
+          right: paddingOuter,
+          zIndex: 100,
+          padding: "8px 0", // Only vertical padding
+          height: "auto",
+        }}
         >
           <Breadcrumbs
             history={[...history, currentNode]}
             onNavigate={handleBack}
           />
         </div>
+      )}
+      {expandingNodeTransition((style: any, node: any) => 
+        node && (
+          <animated.div
+            style={{
+              position: "absolute",
+              borderRadius: `${borderRadius}px`,
+              backgroundColor: getNodeColor(node, nodes, colorRange, colorRangeBehavior),
+              ...style,
+              zIndex: 1000,
+            }}
+          >
+            {renderComponent ? (
+              renderComponent({
+                node: node.data,
+                width: style.width,
+                height: style.height,
+                backgroundColor: getNodeColor(node, nodes, colorRange, colorRangeBehavior),
+                handleBack,
+                history
+              })
+            ) : (
+              <DefaultNode
+                node={node.data}
+                width={style.width}
+                height={style.height}
+                backgroundColor={getNodeColor(node, nodes, colorRange, colorRangeBehavior)}
+                handleBack={handleBack}
+                history={history}
+                backButtonEnabled={!!backButtonEnabled}
+              />
+            )}
+          </animated.div>
+        )
       )}
       {transitions((style: any, node: any) => (
         <animated.div
@@ -226,17 +284,16 @@ export const TreeMap: React.FC<TreeMapProps> = ({
             border: colorRangeBehavior === "borderOnly" 
               ? `2px solid ${colorRange[0]}`
               : "1px solid rgba(0, 0, 0, 0.1)",
-            transform: to(
-              [style.x, style.y, style.scale],
-              (x, y, s) => `translate3d(${x}px, ${y}px, 0) scale(${s})`
-            ),
-            transformOrigin: 'center',
             width: style.width,
             height: style.height,
             opacity: style.opacity,
             boxSizing: 'border-box',
             transition: 'background-color 0.3s ease',
             willChange: 'transform, opacity, width, height',
+            transform: to(
+              [style.x, style.y],
+              (x, y) => `translate3d(${x}px, ${y}px, 0)`
+            ),
           }}
           onClick={() => handleNodeClick(node)}
           onMouseEnter={(e: any) => {
