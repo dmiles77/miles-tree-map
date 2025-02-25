@@ -1,5 +1,5 @@
 import React from 'react';
-import { TreeNode, Position } from '../interfaces/inferfaces';
+import { TreeNode } from '../interfaces/inferfaces';
 
 interface DefaultNodeProps {
   node: TreeNode;
@@ -7,7 +7,7 @@ interface DefaultNodeProps {
   height: number;
   backgroundColor: string;
   handleBack: (index: number) => void;
-  history: Array<{ node: TreeNode; position: Position }>;
+  history: Array<TreeNode>;
   backButtonEnabled: boolean;
 }
 

@@ -52,7 +52,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   onNodeClick,
 }) => {
   const [currentNode, setCurrentNode] = useState<TreeNode>(data);
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<TreeNode[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [clickedNode, setClickedNode] = useState<HierarchyRectangularNode<TreeNode> | null>(null);
@@ -62,24 +62,16 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     y: 0,
     data: null,
   });
-  const [breadcrumbsHeight, setBreadcrumbsHeight] = useState(0);
-  const breadcrumbRef = useRef<HTMLDivElement>(null);
 
   const { nodes, prevLayout } = useTreeMapLayout({
     currentNode,
     dimensions,
     paddingInner,
-    paddingOuter
+    paddingOuter,
+    breadcrumbEnabled
   });
 
   const { getNodeColor } = useTreeMapColors();
-
-  useEffect(() => {
-    if (breadcrumbEnabled && breadcrumbRef.current) {
-      const { height } = breadcrumbRef.current.getBoundingClientRect();
-      setBreadcrumbsHeight(height);
-    }
-  }, [breadcrumbEnabled, dimensions, history]);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -95,12 +87,13 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   }, []);
 
   const handleNodeClick = (layoutNode: HierarchyRectangularNode<TreeNode>) => {
-    if (layoutNode.data.children?.length && !isTransitioning) {
-      setIsTransitioning(true);
-      setClickedNode(layoutNode); // Store clicked node for zoom effect
-      // Delay state updates slightly to allow zoom animation to start
-      setHistory(prev => [...prev, currentNode] as any);
-      setCurrentNode(layoutNode.data);
+    if (layoutNode.data.children?.length) {
+      setClickedNode(layoutNode);
+      setTimeout(() => {
+        setHistory([...history, currentNode]);
+        setCurrentNode(layoutNode.data);
+        setIsTransitioning(false);
+      }, animationDuration);
     }
     onNodeClick?.(layoutNode.data);
   };
@@ -118,8 +111,8 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   };
 
   const getTreeMapBounds = () => {
+    const verticalSpace = breadcrumbEnabled ? TREE_MAP_CONSTANTS.BREADCRUMBS_HEIGHT : 0;
     const effectiveTopPadding = breadcrumbEnabled ? 0 : paddingOuter;
-    const verticalSpace = breadcrumbEnabled ? breadcrumbsHeight : 0;
     
     return {
       x: paddingOuter,
@@ -132,23 +125,23 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   const transitions = useTransition(nodes, {
     keys: (node) => node.data.id,
     from: (node) => {
-    if (clickedNode) {
-      const bounds = getTreeMapBounds();
-      const parentXScale = clickedNode.x1 - clickedNode.x0;
-      const parentYScale = clickedNode.y1 - clickedNode.y0;
-      
-      // Calculate relative position within clicked node
-      const xOffset = (node.x0 - bounds.x) - clickedNode.x0;
-      const yOffset = (node.y0 - bounds.y) - clickedNode.y0;
-      
-      return {
-        opacity: 0,
-        x: clickedNode.x0 + (xOffset * parentXScale / bounds.width),
-        y: clickedNode.y0 + (yOffset * parentYScale / bounds.height),
-        width: (node.x1 - node.x0) * (parentXScale / bounds.width),
-        height: (node.y1 - node.y0) * (parentYScale / bounds.height),
-      };
-    }
+      if (clickedNode) {
+        const bounds = getTreeMapBounds();
+        const parentOriginalWidth = clickedNode.x1 - clickedNode.x0;
+        const parentOriginalHeight = clickedNode.y1 - clickedNode.y0;
+    
+        // Calculate proportional positions within parent's original area
+        const proportionalX = (node.x0 - bounds.x) / bounds.width;
+        const proportionalY = (node.y0 - bounds.y) / bounds.height;
+    
+        return {
+          opacity: 0,
+          x: clickedNode.x0 + proportionalX * parentOriginalWidth,
+          y: clickedNode.y0 + proportionalY * parentOriginalHeight,
+          width: (node.x1 - node.x0) * (parentOriginalWidth / bounds.width),
+          height: (node.y1 - node.y0) * (parentOriginalHeight / bounds.height),
+        };
+      }
 
       const prev = prevLayout[node.data.id];
       return {
@@ -178,7 +171,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     leave: { opacity: 0 },
     config: {
       duration: animationDuration,
-      easing: t => t * (2 - t),
+      easing: t => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
     },
   });
 
@@ -219,20 +212,20 @@ export const TreeMap: React.FC<TreeMapProps> = ({
         position: "relative",
         overflow: "hidden",
         cursor: "pointer",
+        clipPath: 'inset(0 0 0 0)'
       }}
     >
       {breadcrumbEnabled && (
         <div
-        ref={breadcrumbRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: paddingOuter,
-          right: paddingOuter,
-          zIndex: 100,
-          padding: "8px 0", // Only vertical padding
-          height: "auto",
-        }}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: paddingOuter,
+            right: paddingOuter,
+            zIndex: 101,
+            padding: "8px 0",
+            height: "auto",
+          }}
         >
           <Breadcrumbs
             history={[...history, currentNode]}
@@ -248,7 +241,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
               borderRadius: `${borderRadius}px`,
               backgroundColor: getNodeColor(node, nodes, colorRange, colorRangeBehavior),
               ...style,
-              zIndex: 1000,
+              zIndex: 100,
             }}
           >
             {renderComponent ? (
@@ -280,15 +273,14 @@ export const TreeMap: React.FC<TreeMapProps> = ({
           style={{
             position: "absolute",
             borderRadius: `${borderRadius}px`,
-            border: colorRangeBehavior === "borderOnly" 
-              ? `2px solid ${colorRange[0]}`
-              : "1px solid rgba(0, 0, 0, 0.1)",
             width: style.width,
             height: style.height,
             opacity: style.opacity,
             boxSizing: 'border-box',
             transition: 'background-color 0.3s ease',
-            willChange: 'transform, opacity, width, height',
+            willChange: 'transform, opacity',
+            border: 'none',
+            boxShadow: 'none',
             transform: to(
               [style.x, style.y],
               (x, y) => `translate3d(${x}px, ${y}px, 0)`

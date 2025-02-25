@@ -12,7 +12,7 @@ export interface ICustomNodeProps {
   height: number;
   backgroundColor: string;
   handleBack: (index: number) => void;
-  history: Array<{ node: TreeNode; position: Position }>;
+  history: Array<TreeNode>;
 }
 
 export interface ICustomTooltipProps {
