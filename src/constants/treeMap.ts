@@ -29,5 +29,17 @@ export const TREE_MAP_CONSTANTS = {
     PATTERN_FILL: 'patternFill',
     HEATMAP: 'heatmap'
   },
-  BREADCRUMBS_HEIGHT: 40
+  BREADCRUMBS_HEIGHT: 40,
+  ANIMATION_PHASE: {
+    IDLE: 'idle' as const,
+    EXPANDING: 'expanding' as const,
+    EXPANDED: 'expanded' as const,
+    SHOWING_CHILDREN: 'showing-children' as const
+  }
 }; 
+
+export type AnimationPhase = 
+  | typeof TREE_MAP_CONSTANTS.ANIMATION_PHASE.IDLE
+  | typeof TREE_MAP_CONSTANTS.ANIMATION_PHASE.EXPANDING
+  | typeof TREE_MAP_CONSTANTS.ANIMATION_PHASE.EXPANDED
+  | typeof TREE_MAP_CONSTANTS.ANIMATION_PHASE.SHOWING_CHILDREN; 

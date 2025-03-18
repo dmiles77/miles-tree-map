@@ -1,5 +1,10 @@
 import React from 'react';
-import { TreeNode } from '../interfaces/interfaces'
+import { TreeNode } from '../../interfaces/interfaces';
+import {
+  breadcrumbsContainerStyle,
+  separatorStyle,
+  breadcrumbButtonStyle
+} from './breadcrumb.styles';
 
 interface BreadcrumbsProps {
   history: TreeNode[];
@@ -8,25 +13,13 @@ interface BreadcrumbsProps {
 
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ history, onNavigate }) => {
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '4px', 
-      padding: '4px 8px',
-    }}>
+    <div style={breadcrumbsContainerStyle}>
       {history.map((node, idx) => (
         <React.Fragment key={node.id}>
-          {idx > 0 && <span style={{ color: '#666' }}>/</span>}
+          {idx > 0 && <span style={separatorStyle}>/</span>}
           <button
             onClick={() => onNavigate(idx)}
-            style={{
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              color: '#007bff',
-              padding: '4px 8px',
-              fontSize: '14px',
-            }}
+            style={breadcrumbButtonStyle}
           >
             {node.name}
           </button>

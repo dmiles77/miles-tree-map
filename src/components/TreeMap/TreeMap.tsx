@@ -1,8 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import { HierarchyRectangularNode } from "d3-hierarchy";
-import Breadcrumbs from "./Breadcrumbs";
-import DefaultNode from "./DefaultNode";
-import Tooltip from "./Tooltip";
+import Breadcrumbs from "../Breadcrumbs/Breadcrumbs";
+import DefaultNode from "../DefaultNode/DefaultNode";
+import Tooltip from "../Tooltip/Tooltip";
 import {
   TreeNode,
   ColorRangeBehavior,
@@ -10,10 +10,20 @@ import {
   ICustomNodeProps,
   ICustomTooltipProps,
   ITooltip
-} from "../interfaces/interfaces";
-import { TREE_MAP_CONSTANTS } from '../constants/treeMap';
-import { useTreeMapLayout } from '../hooks/useTreeMapLayout';
-import { useTreeMapColors } from '../hooks/useTreeMapColors';
+} from "../../interfaces/interfaces";
+import { TREE_MAP_CONSTANTS, AnimationPhase } from '../../constants/treeMap';
+import { useTreeMapLayout } from '../../hooks/useTreeMapLayout';
+import { useTreeMapColors } from '../../hooks/useTreeMapColors';
+import {
+  containerStyles,
+  getBreadcrumbsContainerStyles,
+  getTreeMapContentStyles,
+  getStaticNodeStyle,
+  getChildNodeStyle,
+  getNodeContentWrapperStyle,
+  getExpandingNodeStyles,
+  keyframesStyles
+} from './treeMap.styles';
 
 interface TreeMapProps {
   data: TreeNode;
@@ -32,9 +42,6 @@ interface TreeMapProps {
   customTooltipStyle?: React.CSSProperties;
   tooltipComponentRender?: (customTooltipProps: ICustomTooltipProps) => React.ReactNode;
 }
-
-// Animation phases
-type AnimationPhase = "idle" | "expanding" | "expanded" | "showing-children";
 
 export const TreeMap: React.FC<TreeMapProps> = ({
   data,
@@ -58,7 +65,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [clickedNode, setClickedNode] = useState<HierarchyRectangularNode<TreeNode> | null>(null);
-  const [animationPhase, setAnimationPhase] = useState<AnimationPhase>("idle");
+  const [animationPhase, setAnimationPhase] = useState<AnimationPhase>(TREE_MAP_CONSTANTS.ANIMATION_PHASE.IDLE);
   const [tooltip, setTooltip] = useState<ITooltip>({
     x: 0,
     y: 0,
@@ -103,27 +110,27 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   };
 
   const handleNodeClick = (layoutNode: HierarchyRectangularNode<TreeNode>) => {
-    if (!layoutNode.data.children?.length || animationPhase !== "idle") return;
+    if (!layoutNode.data.children?.length || animationPhase !== TREE_MAP_CONSTANTS.ANIMATION_PHASE.IDLE) return;
 
     // Start the expansion animation
-    setAnimationPhase("expanding");
+    setAnimationPhase(TREE_MAP_CONSTANTS.ANIMATION_PHASE.EXPANDING);
     setClickedNode(layoutNode);
 
     // After expansion animation completes, update the state
     setTimeout(() => {
       // Expansion completed - update the data model
-      setAnimationPhase("expanded");
+      setAnimationPhase(TREE_MAP_CONSTANTS.ANIMATION_PHASE.EXPANDED);
       setHistory(prev => [...prev, currentNode]);
       setCurrentNode(layoutNode.data);
       
       // Short delay to ensure the expand animation completes fully before children appear
       setTimeout(() => {
-        setAnimationPhase("showing-children");
+        setAnimationPhase(TREE_MAP_CONSTANTS.ANIMATION_PHASE.SHOWING_CHILDREN);
         
         // Reset after children appear
         setTimeout(() => {
           setClickedNode(null);
-          setAnimationPhase("idle");
+          setAnimationPhase(TREE_MAP_CONSTANTS.ANIMATION_PHASE.IDLE);
         }, animationDuration);
       }, 50); // Small delay to ensure clean transition 
     }, animationDuration);
@@ -132,7 +139,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   };
 
   const handleBack = (index: number) => {
-    if (index === history.length || animationPhase !== "idle") return;
+    if (index === history.length || animationPhase !== TREE_MAP_CONSTANTS.ANIMATION_PHASE.IDLE) return;
     
     const targetNode = history[index];
     setCurrentNode(targetNode);
@@ -153,22 +160,26 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     }
   };
 
-  const renderNodeContent = (node: TreeNode, width: number, height: number, backgroundColor: string) => {
+  const renderNodeContent = (node: TreeNode, width: number | string | undefined, height: number | string | undefined, backgroundColor: string | undefined) => {
+    // Convert width and height to numbers for calculations if they're strings
+    const numWidth = typeof width === 'string' ? parseFloat(width) : (width || 0);
+    const numHeight = typeof height === 'string' ? parseFloat(height) : (height || 0);
+    
     return renderComponent ? (
       renderComponent({
         node,
-        width,
-        height,
-        backgroundColor,
+        width: numWidth,
+        height: numHeight,
+        backgroundColor: backgroundColor || 'transparent',
         handleBack,
         history
       })
     ) : (
       <DefaultNode
         node={node}
-        width={width}
-        height={height}
-        backgroundColor={backgroundColor}
+        width={numWidth}
+        height={numHeight}
+        backgroundColor={backgroundColor || 'transparent'}
         handleBack={handleBack}
         history={history}
         backButtonEnabled={!!backButtonEnabled}
@@ -212,95 +223,21 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     // 0.85 is a good balance - it prevents text from shrinking too much
     const contentScale = Math.min(Math.max(0.85, 1 / Math.sqrt(areaRatio)), 1);
     
-    // Common styles for all animation phases
-    const commonStyles = {
-      position: "absolute" as const,
-      borderRadius: `${borderRadius}px`,
-      backgroundColor, // Keep consistent color
-      zIndex: 200,
-      overflow: "hidden",
-      boxSizing: "border-box" as const,
-      willChange: "transform, width, height", // Optimize for animation performance
-    };
-    
-    if (animationPhase === "expanding") {
-      // During expansion - animate from initial to final size
-      return {
-        ...commonStyles,
-        width: initialStyles.width,
-        height: initialStyles.height,
-        transform: `translate(${initialStyles.x}px, ${initialStyles.y}px)`,
-        animation: `expand-node ${animationDuration}ms forwards cubic-bezier(0.4, 0, 0.2, 1)`,
-        // CSS variables to store animation position values
-        "--initial-x": `${initialStyles.x}px`,
-        "--initial-y": `${initialStyles.y}px`,
-        "--initial-width": `${initialStyles.width}px`,
-        "--initial-height": `${initialStyles.height}px`,
-        "--final-x": `${finalStyles.x}px`,
-        "--final-y": `${finalStyles.y}px`,
-        "--final-width": `${finalStyles.width}px`,
-        "--final-height": `${finalStyles.height}px`,
-        "--content-scale": contentScale,
-      };
-    } else if (animationPhase === "expanded" || animationPhase === "showing-children") {
-      // For both expanded and showing-children phases, use the same styling to avoid the replacement effect
-      // The only difference will be the opacity transition in showing-children phase
-      const style = {
-        ...commonStyles,
-        width: finalStyles.width,
-        height: finalStyles.height,
-        transform: `translate(${finalStyles.x}px, ${finalStyles.y}px)`,
-        "--content-scale": contentScale,
-        zIndex: animationPhase === "showing-children" ? 150 : 200,
-      };
-      
-      // Only add opacity transition for showing-children phase
-      if (animationPhase === "showing-children") {
-        return {
-          ...style,
-          transition: `opacity ${animationDuration / 2}ms cubic-bezier(0.4, 0, 0.2, 1)`,
-          opacity: 0,
-        };
-      }
-      
-      return style;
-    }
-    
-    return null;
+    return getExpandingNodeStyles(
+      initialStyles,
+      finalStyles,
+      backgroundColor,
+      borderRadius,
+      contentScale,
+      animationPhase,
+      animationDuration
+    );
   };
 
   // Render node content with wrapper to maintain positioning during animations
-  const renderNodeContentWithWrapper = (node: TreeNode, width: number, height: number, backgroundColor: string, isExpanding: boolean = false) => {
-    // Common styling for the content wrapper
-    const wrapperStyle: React.CSSProperties = {
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      width: '100%',
-      height: '100%',
-      position: 'relative',
-      textAlign: 'center',
-      padding: '4px',
-      boxSizing: 'border-box',
-    };
+  const renderNodeContentWithWrapper = (node: TreeNode, width: number | string | undefined, height: number | string | undefined, backgroundColor: string | undefined, isExpanding: boolean = false) => {
+    const wrapperStyle = getNodeContentWrapperStyle(isExpanding, animationPhase, animationDuration);
     
-    // Apply different animations based on the animation phase
-    if (isExpanding) {
-      // For expanding nodes, maintain text size better
-      if (animationPhase === "expanding") {
-        // Start with no scaling and gradually adjust to the final scale
-        // This keeps text from scaling too early in the animation
-        wrapperStyle.animation = `content-adjust ${animationDuration}ms forwards cubic-bezier(0.4, 0, 0.2, 1)`;
-        wrapperStyle.transformOrigin = 'center';
-        wrapperStyle.willChange = 'transform';
-      } else if (animationPhase === "expanded" || animationPhase === "showing-children") {
-        // Same scale for both phases to avoid the "replacement" effect
-        wrapperStyle.transform = `scale(var(--content-scale, 1))`;
-        wrapperStyle.transformOrigin = 'center';
-      }
-    }
-
     return (
       <div style={wrapperStyle}>
         {renderNodeContent(node, width, height, backgroundColor)}
@@ -309,118 +246,48 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   };
 
   // Get styles for the children nodes
-  const getChildNodeStyle = (node: HierarchyRectangularNode<TreeNode>, index: number) => {
+  const getChildrenNodeStyle = (node: HierarchyRectangularNode<TreeNode>, index: number) => {
     const backgroundColor = getNodeColor(node, nodes, colorRange, colorRangeBehavior);
-    const width = node.x1 - node.x0;
-    const height = node.y1 - node.y0;
     
-    return {
-      position: "absolute" as const,
-      borderRadius: `${borderRadius}px`,
+    return getChildNodeStyle(
+      node.x0,
+      node.y0,
+      node.x1,
+      node.y1,
       backgroundColor,
-      width,
-      height,
-      transform: `translate(${node.x0}px, ${node.y0}px) scale(0.8)`,
-      transformOrigin: "center",
-      zIndex: 100,
-      overflow: "hidden",
-      boxSizing: "border-box" as const,
-      opacity: 0,
-      animation: `fade-in-scale ${animationDuration}ms forwards ${index * 30}ms cubic-bezier(0.4, 0, 0.2, 1)`,
-      willChange: "opacity, transform",
-    };
+      borderRadius,
+      animationDuration,
+      index
+    );
   };
 
   // Get styles for static nodes
-  const getStaticNodeStyle = (node: HierarchyRectangularNode<TreeNode>) => {
+  const getStaticNodeBaseStyle = (node: HierarchyRectangularNode<TreeNode>) => {
     const backgroundColor = getNodeColor(node, nodes, colorRange, colorRangeBehavior);
-    const width = node.x1 - node.x0;
-    const height = node.y1 - node.y0;
     
-    return {
-      position: "absolute" as const,
-      borderRadius: `${borderRadius}px`,
+    return getStaticNodeStyle(
+      node.x0,
+      node.y0,
+      node.x1,
+      node.y1,
       backgroundColor,
-      width,
-      height,
-      transform: `translate(${node.x0}px, ${node.y0}px)`,
-      zIndex: 10,
-      overflow: "hidden",
-      boxSizing: "border-box" as const,
-    };
+      borderRadius
+    );
   };
 
   const expandingNodeStyle = getExpandingNodeStyle();
 
-  // Update the animation keyframes
-  const keyframesStyles = `
-    @keyframes expand-node {
-      from {
-        width: var(--initial-width);
-        height: var(--initial-height);
-        transform: translate(var(--initial-x), var(--initial-y));
-      }
-      to {
-        width: var(--final-width);
-        height: var(--final-height);
-        transform: translate(var(--final-x), var(--final-y));
-      }
-    }
-    
-    @keyframes content-adjust {
-      0% {
-        /* Start with no scaling */
-        transform: scale(1);
-      }
-      45% {
-        /* Keep text close to original size longer */
-        transform: scale(0.95);
-      }
-      100% {
-        /* Final scale - gradual application */
-        transform: scale(var(--content-scale, 1));
-      }
-    }
-    
-    @keyframes fade-in-scale {
-      from {
-        opacity: 0;
-        transform: translate(var(--x), var(--y)) scale(0.8);
-      }
-      to {
-        opacity: 1;
-        transform: translate(var(--x), var(--y)) scale(1);
-      }
-    }
-  `;
-
   return (
     <div
       ref={containerRef}
-      style={{
-        width: "100%",
-        height: "100%",
-        position: "relative",
-        overflow: "hidden",
-        cursor: "pointer",
-      }}
+      style={containerStyles}
     >
       <style>
         {keyframesStyles}
       </style>
 
       {breadcrumbEnabled && (
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: paddingOuter,
-            right: paddingOuter,
-            zIndex: 300,
-            padding: "8px 0",
-            height: "auto",
-          }}
-        >
+        <div style={getBreadcrumbsContainerStyles(paddingOuter)}>
           <Breadcrumbs
             history={[...history, currentNode]}
             onNavigate={handleBack}
@@ -428,19 +295,10 @@ export const TreeMap: React.FC<TreeMapProps> = ({
         </div>
       )}
 
-      <div
-        style={{
-          position: "absolute",
-          top: breadcrumbEnabled ? TREE_MAP_CONSTANTS.BREADCRUMBS_HEIGHT : 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          overflow: "hidden",
-        }}
-      >
+      <div style={getTreeMapContentStyles(breadcrumbEnabled, TREE_MAP_CONSTANTS.BREADCRUMBS_HEIGHT)}>
         {/* Render static nodes (idle state) */}
-        {animationPhase === "idle" && nodes.map((node) => {
-          const style = getStaticNodeStyle(node);
+        {animationPhase === TREE_MAP_CONSTANTS.ANIMATION_PHASE.IDLE && nodes.map((node) => {
+          const style = getStaticNodeBaseStyle(node);
           return (
             <div
               key={node.data.id}
@@ -466,8 +324,8 @@ export const TreeMap: React.FC<TreeMapProps> = ({
         )}
 
         {/* Render children nodes when they should appear */}
-        {animationPhase === "showing-children" && nodes.map((node, index) => {
-          const style = getChildNodeStyle(node, index);
+        {animationPhase === TREE_MAP_CONSTANTS.ANIMATION_PHASE.SHOWING_CHILDREN && nodes.map((node, index) => {
+          const style = getChildrenNodeStyle(node, index);
           return (
             <div
               key={node.data.id}
