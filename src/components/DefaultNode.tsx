@@ -1,5 +1,5 @@
 import React from 'react';
-import { TreeNode } from '../interfaces/inferfaces';
+import { TreeNode } from '../interfaces/interfaces';
 
 interface DefaultNodeProps {
   node: TreeNode;

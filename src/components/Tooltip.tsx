@@ -3,7 +3,7 @@ import {
   TreeNode,
   TooltipPosition,
   ICustomTooltipProps,
-} from "../interfaces/inferfaces";
+} from "../interfaces/interfaces";
 
 interface TooltipProps {
   node: TreeNode;

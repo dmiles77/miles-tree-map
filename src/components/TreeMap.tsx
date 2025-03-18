@@ -11,7 +11,7 @@ import {
   ICustomNodeProps,
   ICustomTooltipProps,
   ITooltip
-} from "../interfaces/inferfaces";
+} from "../interfaces/interfaces";
 import { TREE_MAP_CONSTANTS } from '../constants/treeMap';
 import { useTreeMapLayout } from '../hooks/useTreeMapLayout';
 import { useTreeMapColors } from '../hooks/useTreeMapColors';

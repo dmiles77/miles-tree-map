@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { hierarchy, treemap } from "d3-hierarchy";
-import { TreeNode } from '../interfaces/inferfaces';
+import { TreeNode } from '../interfaces/interfaces';
 import { TREE_MAP_CONSTANTS } from '../constants/treeMap';
 
 interface UseTreeMapLayoutProps {

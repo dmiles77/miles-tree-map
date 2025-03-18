@@ -1,5 +1,5 @@
 import React from 'react';
-import { ICustomNodeProps } from '../interfaces/inferfaces';
+import { ICustomNodeProps } from '../interfaces/interfaces';
 
 interface CustomNodeExampleProps {
   componentProps: ICustomNodeProps;

@@ -1,6 +1,6 @@
 import { scaleLinear } from "d3-scale";
 import { HierarchyRectangularNode } from "d3-hierarchy";
-import { TreeNode, ColorRangeBehavior } from '../interfaces/inferfaces';
+import { TreeNode, ColorRangeBehavior } from '../interfaces/interfaces';
 import { TREE_MAP_CONSTANTS } from '../constants/treeMap';
 
 export const useTreeMapColors = () => {
