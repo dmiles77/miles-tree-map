@@ -74,27 +74,30 @@ export const TreeMap: React.FC<TreeMapProps> = ({
   const { getNodeColor } = useTreeMapColors();
 
   useEffect(() => {
+    if (!containerRef.current) return;
+
     const updateDimensions = () => {
-      if (containerRef.current) {
-        const { width, height } = containerRef.current.getBoundingClientRect();
-        setDimensions({ width, height });
-      }
+      const { width, height } = containerRef.current!.getBoundingClientRect();
+      setDimensions({ width, height });
     };
 
     const observer = new ResizeObserver(updateDimensions);
-    if (containerRef.current) observer.observe(containerRef.current);
+    observer.observe(containerRef.current);
+    updateDimensions(); // Initial measurement
+
     return () => observer.disconnect();
   }, []);
 
   const handleNodeClick = (layoutNode: HierarchyRectangularNode<TreeNode>) => {
-    if (layoutNode.data.children?.length) {
-      setClickedNode(layoutNode);
-      setTimeout(() => {
-        setHistory([...history, currentNode]);
-        setCurrentNode(layoutNode.data);
-        setIsTransitioning(false);
-      }, animationDuration);
-    }
+    if (!layoutNode.data.children?.length || isTransitioning) return;
+
+    setClickedNode(layoutNode);
+    setTimeout(() => {
+      setHistory(prev => [...prev, currentNode]);
+      setCurrentNode(layoutNode.data);
+      setIsTransitioning(false);
+    }, animationDuration);
+    
     onNodeClick?.(layoutNode.data);
   };
 
@@ -130,7 +133,6 @@ export const TreeMap: React.FC<TreeMapProps> = ({
         const parentOriginalWidth = clickedNode.x1 - clickedNode.x0;
         const parentOriginalHeight = clickedNode.y1 - clickedNode.y0;
     
-        // Calculate proportional positions within parent's original area
         const proportionalX = (node.x0 - bounds.x) / bounds.width;
         const proportionalY = (node.y0 - bounds.y) / bounds.height;
     
@@ -202,6 +204,20 @@ export const TreeMap: React.FC<TreeMapProps> = ({
       setIsTransitioning(false);
     },
   });
+
+  const handleMouseEvents = (e: React.MouseEvent, node: HierarchyRectangularNode<TreeNode>) => {
+    if (!tooltipEnabled) return;
+
+    if (e.type === 'mouseenter' || e.type === 'mousemove') {
+      setTooltip({
+        x: e.clientX,
+        y: e.clientY,
+        data: node.data,
+      });
+    } else if (e.type === 'mouseleave') {
+      setTooltip({ x: 0, y: 0, data: null });
+    }
+  };
 
   return (
     <div
@@ -287,23 +303,9 @@ export const TreeMap: React.FC<TreeMapProps> = ({
             ),
           }}
           onClick={() => handleNodeClick(node)}
-          onMouseEnter={(e: any) => {
-            setTooltip({
-              x: e.clientX,
-              y: e.clientY,
-              data: node.data,
-            });
-          }}
-          onMouseMove={(e: any) => {
-            setTooltip((prev) => ({
-              ...prev,
-              x: e.clientX,
-              y: e.clientY,
-            }));
-          }}
-          onMouseLeave={() => {
-            setTooltip({ x: 0, y: 0, data: null });
-          }}
+          onMouseEnter={(e) => handleMouseEvents(e, node)}
+          onMouseMove={(e) => handleMouseEvents(e, node)}
+          onMouseLeave={(e) => handleMouseEvents(e, node)}
         >
           {renderComponent ? (
             renderComponent({
@@ -328,7 +330,13 @@ export const TreeMap: React.FC<TreeMapProps> = ({
         </animated.div>
       ))}
       {tooltipEnabled && tooltip.data && (
-        <Tooltip node={tooltip.data} position={{x: tooltip.x, y: tooltip.y}} customTooltipPosition={customTooltipPosition} customTooltipStyle={customTooltipStyle} tooltipComponentRender={tooltipComponentRender} />
+        <Tooltip 
+          node={tooltip.data} 
+          position={{x: tooltip.x, y: tooltip.y}} 
+          customTooltipPosition={customTooltipPosition} 
+          customTooltipStyle={customTooltipStyle} 
+          tooltipComponentRender={tooltipComponentRender} 
+        />
       )}
     </div>
   );
