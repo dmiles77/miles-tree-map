@@ -14,7 +14,7 @@ interface BreadcrumbsProps {
 const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ history, onNavigate }) => {
   return (
     <div style={breadcrumbsContainerStyle}>
-      {history.map((node, idx) => (
+      {history.map((node: TreeNode, idx: number) => (
         <React.Fragment key={node.id}>
           {idx > 0 && <span style={separatorStyle}>/</span>}
           <button

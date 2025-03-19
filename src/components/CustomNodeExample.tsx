@@ -34,7 +34,7 @@ const CustomNodeExample: React.FC<CustomNodeExampleProps> = ({ componentProps })
           >
             {history.length > 0 && (
               <button
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                     handleBack(history.length - 1);
                 }}

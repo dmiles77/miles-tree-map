@@ -40,7 +40,7 @@ const DefaultNode: React.FC<DefaultNodeProps> = ({
         <div style={getNodeContainerStyle(width, height, backgroundColor)}>
             {history.length > 0 && backButtonEnabled && (
               <button
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   handleBack(history.length - 1);
                 }}

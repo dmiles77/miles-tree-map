@@ -27,7 +27,7 @@ import {
 
 interface TreeMapProps {
   data: TreeNode;
-  renderComponent?: (componentProps: ICustomNodeProps) => JSX.Element;
+  renderComponent?: (componentProps: ICustomNodeProps) => React.ReactElement;
   colorRange?: string[];
   colorRangeBehavior?: ColorRangeBehavior;
   onNodeClick?: (node: TreeNode) => void;
@@ -120,7 +120,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     setTimeout(() => {
       // Expansion completed - update the data model
       setAnimationPhase(TREE_MAP_CONSTANTS.ANIMATION_PHASE.EXPANDED);
-      setHistory(prev => [...prev, currentNode]);
+      setHistory((prev: TreeNode[]) => [...prev, currentNode]);
       setCurrentNode(layoutNode.data);
       
       // Short delay to ensure the expand animation completes fully before children appear
@@ -143,10 +143,10 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     
     const targetNode = history[index];
     setCurrentNode(targetNode);
-    setHistory(prev => prev.slice(0, index));
+    setHistory((prev: TreeNode[]) => prev.slice(0, index));
   };
 
-  const handleMouseEvents = (e: React.MouseEvent, node: HierarchyRectangularNode<TreeNode>) => {
+  const handleMouseEvents = (e: React.MouseEvent<HTMLDivElement>, node: HierarchyRectangularNode<TreeNode>) => {
     if (!tooltipEnabled) return;
 
     if (e.type === 'mouseenter' || e.type === 'mousemove') {
@@ -165,11 +165,15 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     const numWidth = typeof width === 'string' ? parseFloat(width) : (width || 0);
     const numHeight = typeof height === 'string' ? parseFloat(height) : (height || 0);
     
+    // Ensure dimensions are valid numbers
+    const validWidth = isNaN(numWidth) ? 0 : Math.max(0, numWidth);
+    const validHeight = isNaN(numHeight) ? 0 : Math.max(0, numHeight);
+    
     return renderComponent ? (
       renderComponent({
         node,
-        width: numWidth,
-        height: numHeight,
+        width: validWidth,
+        height: validHeight,
         backgroundColor: backgroundColor || 'transparent',
         handleBack,
         history
@@ -177,8 +181,8 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     ) : (
       <DefaultNode
         node={node}
-        width={numWidth}
-        height={numHeight}
+        width={validWidth}
+        height={validHeight}
         backgroundColor={backgroundColor || 'transparent'}
         handleBack={handleBack}
         history={history}
@@ -194,20 +198,20 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     const bounds = getTreeMapBounds();
     const backgroundColor = getNodeColor(clickedNode, nodes, colorRange, colorRangeBehavior);
     
-    // Starting position
+    // Starting position - ensure values are valid
     const initialStyles = {
-      x: clickedNode.x0,
-      y: clickedNode.y0,
-      width: clickedNode.x1 - clickedNode.x0,
-      height: clickedNode.y1 - clickedNode.y0,
+      x: isNaN(clickedNode.x0) ? 0 : clickedNode.x0,
+      y: isNaN(clickedNode.y0) ? 0 : clickedNode.y0,
+      width: Math.max(1, isNaN(clickedNode.x1 - clickedNode.x0) ? 0 : clickedNode.x1 - clickedNode.x0),
+      height: Math.max(1, isNaN(clickedNode.y1 - clickedNode.y0) ? 0 : clickedNode.y1 - clickedNode.y0),
     };
     
-    // Final position (covering entire treemap)
+    // Final position - ensure values are valid
     const finalStyles = {
-      x: bounds.x,
-      y: bounds.y,
-      width: bounds.width,
-      height: bounds.height,
+      x: isNaN(bounds.x) ? 0 : bounds.x,
+      y: isNaN(bounds.y) ? 0 : bounds.y,
+      width: Math.max(1, isNaN(bounds.width) ? 100 : bounds.width),
+      height: Math.max(1, isNaN(bounds.height) ? 100 : bounds.height),
     };
     
     // Calculate content scaling factor based on size difference
@@ -217,11 +221,18 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     
     // Use square root of area ratio for a more balanced scaling
     // This preserves the content size better during expansion
-    const areaRatio = Math.sqrt(finalArea / initialArea);
+    // Ensure we don't get NaN values
+    let areaRatio = 1;
+    if (initialArea > 0 && finalArea > 0 && !isNaN(initialArea) && !isNaN(finalArea)) {
+      areaRatio = Math.sqrt(finalArea / initialArea);
+    }
     
     // Use a less dramatic scaling factor - closer to 1.0 means less scaling
     // 0.85 is a good balance - it prevents text from shrinking too much
-    const contentScale = Math.min(Math.max(0.85, 1 / Math.sqrt(areaRatio)), 1);
+    let contentScale = 0.85;
+    if (!isNaN(areaRatio) && areaRatio > 0) {
+      contentScale = Math.min(Math.max(0.85, 1 / Math.sqrt(areaRatio)), 1);
+    }
     
     return getExpandingNodeStyles(
       initialStyles,
@@ -297,7 +308,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
 
       <div style={getTreeMapContentStyles(breadcrumbEnabled, TREE_MAP_CONSTANTS.BREADCRUMBS_HEIGHT)}>
         {/* Render static nodes (idle state) */}
-        {animationPhase === TREE_MAP_CONSTANTS.ANIMATION_PHASE.IDLE && nodes.map((node) => {
+        {animationPhase === TREE_MAP_CONSTANTS.ANIMATION_PHASE.IDLE && nodes.length > 0 && nodes.map((node: HierarchyRectangularNode<TreeNode>) => {
           const style = getStaticNodeBaseStyle(node);
           return (
             <div
@@ -324,15 +335,18 @@ export const TreeMap: React.FC<TreeMapProps> = ({
         )}
 
         {/* Render children nodes when they should appear */}
-        {animationPhase === TREE_MAP_CONSTANTS.ANIMATION_PHASE.SHOWING_CHILDREN && nodes.map((node, index) => {
+        {animationPhase === TREE_MAP_CONSTANTS.ANIMATION_PHASE.SHOWING_CHILDREN && nodes.length > 0 && nodes.map((node: HierarchyRectangularNode<TreeNode>, index: number) => {
           const style = getChildrenNodeStyle(node, index);
+          const safeX0 = isNaN(node.x0) ? 0 : node.x0;
+          const safeY0 = isNaN(node.y0) ? 0 : node.y0;
+          
           return (
             <div
               key={node.data.id}
               style={{
                 ...style,
-                "--x": `${node.x0}px`,
-                "--y": `${node.y0}px`,
+                "--x": `${safeX0}px`,
+                "--y": `${safeY0}px`,
               } as React.CSSProperties}
               onClick={() => handleNodeClick(node)}
               onMouseEnter={(e) => handleMouseEvents(e, node)}

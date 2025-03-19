@@ -1,2 +1,2 @@
 export { TreeMap } from './components/TreeMap/index';
-export { TreeNode, ICustomNodeProps, ICustomTooltipProps, Position, ColorRangeBehavior, TooltipPosition, XYPosition } from './interfaces/interfaces';
+export type { TreeNode, ICustomNodeProps, ICustomTooltipProps, Position, ColorRangeBehavior, TooltipPosition, XYPosition } from './interfaces/interfaces';

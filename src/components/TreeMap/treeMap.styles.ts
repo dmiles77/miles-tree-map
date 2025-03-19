@@ -43,8 +43,15 @@ export const getStaticNodeStyle = (
   backgroundColor: string | undefined,
   borderRadius: number
 ): React.CSSProperties => {
-  const width = x1 - x0;
-  const height = y1 - y0;
+  // Only replace with 0 if the value is NaN or undefined, otherwise keep the original value
+  const safeX0 = isNaN(x0) ? 0 : x0;
+  const safeY0 = isNaN(y0) ? 0 : y0;
+  const safeX1 = isNaN(x1) ? 0 : x1;
+  const safeY1 = isNaN(y1) ? 0 : y1;
+  
+  // Ensure width and height are non-negative
+  const width = Math.max(0, safeX1 - safeX0);
+  const height = Math.max(0, safeY1 - safeY0);
   
   return {
     position: "absolute",
@@ -52,7 +59,7 @@ export const getStaticNodeStyle = (
     backgroundColor: backgroundColor || 'transparent',
     width,
     height,
-    transform: `translate(${x0}px, ${y0}px)`,
+    transform: `translate(${safeX0}px, ${safeY0}px)`,
     zIndex: 10,
     overflow: "hidden",
     boxSizing: "border-box",
@@ -70,8 +77,15 @@ export const getChildNodeStyle = (
   animationDuration: number,
   index: number
 ): React.CSSProperties => {
-  const width = x1 - x0;
-  const height = y1 - y0;
+  // Only replace with 0 if the value is NaN or undefined, otherwise keep the original value
+  const safeX0 = isNaN(x0) ? 0 : x0;
+  const safeY0 = isNaN(y0) ? 0 : y0;
+  const safeX1 = isNaN(x1) ? 0 : x1;
+  const safeY1 = isNaN(y1) ? 0 : y1;
+  
+  // Ensure width and height are non-negative
+  const width = Math.max(0, safeX1 - safeX0);
+  const height = Math.max(0, safeY1 - safeY0);
   
   return {
     position: "absolute",
@@ -79,7 +93,7 @@ export const getChildNodeStyle = (
     backgroundColor: backgroundColor || 'transparent',
     width,
     height,
-    transform: `translate(${x0}px, ${y0}px) scale(0.8)`,
+    transform: `translate(${safeX0}px, ${safeY0}px) scale(0.8)`,
     transformOrigin: "center",
     zIndex: 100,
     overflow: "hidden",
@@ -140,6 +154,20 @@ export const getExpandingNodeStyles = (
   animationPhase: string,
   animationDuration: number
 ): React.CSSProperties | null => {
+  // Only replace with 0 if the value is NaN or undefined, otherwise keep the original value
+  const safeInitialX = isNaN(initialStyles.x) ? 0 : initialStyles.x;
+  const safeInitialY = isNaN(initialStyles.y) ? 0 : initialStyles.y;
+  const safeInitialWidth = isNaN(initialStyles.width) ? 0 : Math.max(0, initialStyles.width);
+  const safeInitialHeight = isNaN(initialStyles.height) ? 0 : Math.max(0, initialStyles.height);
+  
+  const safeFinalX = isNaN(finalStyles.x) ? 0 : finalStyles.x;
+  const safeFinalY = isNaN(finalStyles.y) ? 0 : finalStyles.y;
+  const safeFinalWidth = isNaN(finalStyles.width) ? 0 : Math.max(0, finalStyles.width);
+  const safeFinalHeight = isNaN(finalStyles.height) ? 0 : Math.max(0, finalStyles.height);
+  
+  // Ensure contentScale is a valid number between 0.1 and 1
+  const safeContentScale = isNaN(contentScale) ? 0.85 : Math.min(Math.max(0.1, contentScale), 1);
+  
   // Common styles for all animation phases
   const commonStyles: React.CSSProperties = {
     position: "absolute",
@@ -155,30 +183,30 @@ export const getExpandingNodeStyles = (
     // During expansion - animate from initial to final size
     return {
       ...commonStyles,
-      width: initialStyles.width,
-      height: initialStyles.height,
-      transform: `translate(${initialStyles.x}px, ${initialStyles.y}px)`,
+      width: safeInitialWidth,
+      height: safeInitialHeight,
+      transform: `translate(${safeInitialX}px, ${safeInitialY}px)`,
       animation: `expand-node ${animationDuration}ms forwards cubic-bezier(0.4, 0, 0.2, 1)`,
       // CSS variables to store animation position values
-      "--initial-x": `${initialStyles.x}px`,
-      "--initial-y": `${initialStyles.y}px`,
-      "--initial-width": `${initialStyles.width}px`,
-      "--initial-height": `${initialStyles.height}px`,
-      "--final-x": `${finalStyles.x}px`,
-      "--final-y": `${finalStyles.y}px`,
-      "--final-width": `${finalStyles.width}px`,
-      "--final-height": `${finalStyles.height}px`,
-      "--content-scale": contentScale,
+      "--initial-x": `${safeInitialX}px`,
+      "--initial-y": `${safeInitialY}px`,
+      "--initial-width": `${safeInitialWidth}px`,
+      "--initial-height": `${safeInitialHeight}px`,
+      "--final-x": `${safeFinalX}px`,
+      "--final-y": `${safeFinalY}px`,
+      "--final-width": `${safeFinalWidth}px`,
+      "--final-height": `${safeFinalHeight}px`,
+      "--content-scale": safeContentScale,
     } as React.CSSProperties;
   } else if (animationPhase === 'expanded' || animationPhase === 'showing-children') {
     // For both expanded and showing-children phases, use the same styling to avoid the replacement effect
     // The only difference will be the opacity transition in showing-children phase
     const style: React.CSSProperties = {
       ...commonStyles,
-      width: finalStyles.width,
-      height: finalStyles.height,
-      transform: `translate(${finalStyles.x}px, ${finalStyles.y}px)`,
-      "--content-scale": contentScale,
+      width: safeFinalWidth,
+      height: safeFinalHeight,
+      transform: `translate(${safeFinalX}px, ${safeFinalY}px)`,
+      "--content-scale": safeContentScale,
       zIndex: animationPhase === 'showing-children' ? 150 : 200,
     } as React.CSSProperties;
     
