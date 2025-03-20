@@ -24,6 +24,14 @@ export interface ICustomTooltipProps {
   containerHeight?: number;
   calculatedPosition?: { left: number; top: number };
   tooltipPosition?: TooltipPosition;
+  nodeDimensions?: {
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+    width: number;
+    height: number;
+  };
 }
 
 export interface Position {
@@ -38,7 +46,19 @@ export type ColorRangeBehavior = "oneColor" | "gradient" | "discrete" | "transpa
 export type TooltipPosition = 
   | 'mouseRight' 
   | 'mouseTop' 
-  | 'mouseBottom';
+  | 'mouseBottom'
+  | 'fixedTopLeft'
+  | 'fixedTopRight'
+  | 'fixedBottomLeft'
+  | 'fixedBottomRight'
+  | 'fixedTopCenter'
+  | 'fixedBottomCenter'
+  | 'nodeTopLeft'
+  | 'nodeTopRight'
+  | 'nodeBottomLeft'
+  | 'nodeBottomRight'
+  | 'nodeTopCenter'
+  | 'nodeBottomCenter';
 
 export interface XYPosition {
   x: number;

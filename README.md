@@ -226,11 +226,29 @@ The `colorRangeBehavior` prop supports these options:
 ## 📍 Tooltip Positions
 
 Available `customTooltipPosition` options:
+
+**Mouse-following positions:**
 - `mouseRight`: Tooltip appears to the right of the cursor
 - `mouseTop`: Tooltip appears above the cursor
 - `mouseBottom`: Tooltip appears below the cursor
 
-All tooltip positions are automatically adjusted to stay within the TreeMap container's boundaries.
+**Fixed positions:**
+- `fixedTopLeft`: Fixed at the top-left corner of the TreeMap
+- `fixedTopRight`: Fixed at the top-right corner of the TreeMap
+- `fixedBottomLeft`: Fixed at the bottom-left corner of the TreeMap
+- `fixedBottomRight`: Fixed at the bottom-right corner of the TreeMap
+- `fixedTopCenter`: Fixed at the top-center of the TreeMap
+- `fixedBottomCenter`: Fixed at the bottom-center of the TreeMap
+
+**Node-relative positions:**
+- `nodeTopLeft`: Positioned above the top-left corner of the hovered node
+- `nodeTopRight`: Positioned above the top-right corner of the hovered node 
+- `nodeBottomLeft`: Positioned below the bottom-left corner of the hovered node
+- `nodeBottomRight`: Positioned below the bottom-right corner of the hovered node
+- `nodeTopCenter`: Positioned above the center of the hovered node
+- `nodeBottomCenter`: Positioned below the center of the hovered node
+
+Mouse-following and node-relative positions are automatically adjusted to stay within the TreeMap container's boundaries, while fixed positions always remain in the same location regardless of cursor position.
 
 ## 🎯 Custom Components
 

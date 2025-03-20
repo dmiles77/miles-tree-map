@@ -72,6 +72,14 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     data: null,
   });
 
+  // Add state for the current hovered node dimensions
+  const [hoveredNodeDimensions, setHoveredNodeDimensions] = useState<{
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+  } | null>(null);
+
   const { nodes, prevLayout } = useTreeMapLayout({
     currentNode,
     dimensions,
@@ -158,6 +166,14 @@ export const TreeMap: React.FC<TreeMapProps> = ({
       const relativeX = e.clientX - rect.left;
       const relativeY = e.clientY - rect.top;
       
+      // Store node dimensions for tooltip positioning
+      setHoveredNodeDimensions({
+        x0: isNaN(node.x0) ? 0 : node.x0,
+        y0: isNaN(node.y0) ? 0 : node.y0,
+        x1: isNaN(node.x1) ? 0 : node.x1,
+        y1: isNaN(node.y1) ? 0 : node.y1
+      });
+      
       setTooltip({
         x: relativeX,
         y: relativeY,
@@ -165,6 +181,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
       });
     } else if (e.type === 'mouseleave') {
       setTooltip({ x: 0, y: 0, data: null });
+      setHoveredNodeDimensions(null);
     }
   };
 
@@ -385,6 +402,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
           tooltipComponentRender={tooltipComponentRender} 
           containerWidth={dimensions.width}
           containerHeight={dimensions.height}
+          nodeDimensions={hoveredNodeDimensions || undefined}
         />
       )}
     </div>

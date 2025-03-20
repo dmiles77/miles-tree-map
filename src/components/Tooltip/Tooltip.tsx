@@ -20,6 +20,12 @@ interface TooltipProps {
   ) => React.ReactNode;
   containerWidth?: number;
   containerHeight?: number;
+  nodeDimensions?: {
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+  };
 }
 
 const Tooltip: React.FC<TooltipProps> = ({
@@ -29,14 +35,24 @@ const Tooltip: React.FC<TooltipProps> = ({
   customTooltipStyle,
   tooltipComponentRender,
   containerWidth,
-  containerHeight
+  containerHeight,
+  nodeDimensions
 }) => {
+  // Calculate node width and height if dimensions are provided
+  const nodeWidth = nodeDimensions ? nodeDimensions.x1 - nodeDimensions.x0 : 0;
+  const nodeHeight = nodeDimensions ? nodeDimensions.y1 - nodeDimensions.y0 : 0;
+  
   const tooltipPosition = getTooltipPositionStyle(
     position.x,
     position.y,
     customTooltipPosition,
     containerWidth,
-    containerHeight
+    containerHeight,
+    nodeDimensions ? {
+      ...nodeDimensions,
+      width: nodeWidth,
+      height: nodeHeight
+    } : undefined
   );
   
   const tooltipStyle = getTooltipStyle(tooltipPosition, customTooltipStyle);
@@ -50,7 +66,12 @@ const Tooltip: React.FC<TooltipProps> = ({
           containerWidth,
           containerHeight,
           calculatedPosition: tooltipPosition,
-          tooltipPosition: customTooltipPosition
+          tooltipPosition: customTooltipPosition,
+          nodeDimensions: nodeDimensions ? {
+            ...nodeDimensions,
+            width: nodeWidth,
+            height: nodeHeight
+          } : undefined
         })
       ) : (
         <>
