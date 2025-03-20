@@ -191,12 +191,51 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     );
   };
 
-  // Get styles for the expanding node
+  // Get styles for the children nodes
+  const getChildrenNodeStyle = (node: HierarchyRectangularNode<TreeNode>, index: number) => {
+    const colorResult = getNodeColor(node, nodes, colorRange, colorRangeBehavior);
+    
+    return getChildNodeStyle(
+      node.x0,
+      node.y0,
+      node.x1,
+      node.y1,
+      colorResult,
+      borderRadius,
+      animationDuration,
+      index
+    );
+  };
+
+  // Get styles for static nodes
+  const getStaticNodeBaseStyle = (node: HierarchyRectangularNode<TreeNode>) => {
+    const colorResult = getNodeColor(node, nodes, colorRange, colorRangeBehavior);
+    
+    return getStaticNodeStyle(
+      node.x0,
+      node.y0,
+      node.x1,
+      node.y1,
+      colorResult,
+      borderRadius
+    );
+  };
+
+  // Get expanding node style
   const getExpandingNodeStyle = () => {
     if (!clickedNode) return null;
     
     const bounds = getTreeMapBounds();
-    const backgroundColor = getNodeColor(clickedNode, nodes, colorRange, colorRangeBehavior);
+    const colorResult = getNodeColor(clickedNode, nodes, colorRange, colorRangeBehavior);
+    
+    // For border-only mode, hide the parent border when showing children
+    // This prevents double borders being visible
+    const modifiedColorResult = {
+      ...colorResult,
+      borderColor: animationPhase === TREE_MAP_CONSTANTS.ANIMATION_PHASE.SHOWING_CHILDREN 
+        ? undefined 
+        : colorResult.borderColor
+    };
     
     // Starting position - ensure values are valid
     const initialStyles = {
@@ -237,7 +276,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     return getExpandingNodeStyles(
       initialStyles,
       finalStyles,
-      backgroundColor,
+      modifiedColorResult,
       borderRadius,
       contentScale,
       animationPhase,
@@ -253,36 +292,6 @@ export const TreeMap: React.FC<TreeMapProps> = ({
       <div style={wrapperStyle}>
         {renderNodeContent(node, width, height, backgroundColor)}
       </div>
-    );
-  };
-
-  // Get styles for the children nodes
-  const getChildrenNodeStyle = (node: HierarchyRectangularNode<TreeNode>, index: number) => {
-    const backgroundColor = getNodeColor(node, nodes, colorRange, colorRangeBehavior);
-    
-    return getChildNodeStyle(
-      node.x0,
-      node.y0,
-      node.x1,
-      node.y1,
-      backgroundColor,
-      borderRadius,
-      animationDuration,
-      index
-    );
-  };
-
-  // Get styles for static nodes
-  const getStaticNodeBaseStyle = (node: HierarchyRectangularNode<TreeNode>) => {
-    const backgroundColor = getNodeColor(node, nodes, colorRange, colorRangeBehavior);
-    
-    return getStaticNodeStyle(
-      node.x0,
-      node.y0,
-      node.x1,
-      node.y1,
-      backgroundColor,
-      borderRadius
     );
   };
 
@@ -324,13 +333,13 @@ export const TreeMap: React.FC<TreeMapProps> = ({
           );
         })}
 
-        {/* Render the expanding/expanded node */}
-        {clickedNode && expandingNodeStyle && (
+        {/* Render the expanding/expanded node - but hide when showing children */}
+        {clickedNode && expandingNodeStyle && animationPhase !== TREE_MAP_CONSTANTS.ANIMATION_PHASE.SHOWING_CHILDREN && (
           <div
             key={`expanding-${clickedNode.data.id}`}
             style={expandingNodeStyle}
           >
-            {renderNodeContentWithWrapper(clickedNode.data, expandingNodeStyle.width as number, expandingNodeStyle.height as number, expandingNodeStyle.backgroundColor, true)}
+            {renderNodeContentWithWrapper(clickedNode.data, expandingNodeStyle.width as number, expandingNodeStyle.height as number, expandingNodeStyle.backgroundColor)}
           </div>
         )}
 

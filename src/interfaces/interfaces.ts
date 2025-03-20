@@ -11,6 +11,8 @@ export interface ICustomNodeProps {
   width: number;
   height: number;
   backgroundColor: string;
+  borderColor?: string;
+  borderWidth?: number;
   handleBack: (index: number) => void;
   history: Array<TreeNode>;
 }

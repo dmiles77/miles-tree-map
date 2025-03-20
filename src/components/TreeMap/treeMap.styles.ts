@@ -40,23 +40,36 @@ export const getStaticNodeStyle = (
   y0: number,
   x1: number,
   y1: number,
-  backgroundColor: string | undefined,
+  colorResult: { backgroundColor: string; borderColor?: string; borderWidth?: number } | string,
   borderRadius: number
 ): React.CSSProperties => {
   // Only replace with 0 if the value is NaN or undefined, otherwise keep the original value
-  const safeX0 = isNaN(x0) ? 0 : x0;
-  const safeY0 = isNaN(y0) ? 0 : y0;
-  const safeX1 = isNaN(x1) ? 0 : x1;
-  const safeY1 = isNaN(y1) ? 0 : y1;
+  const safeX0 = isNaN(x0) ? 0 : Math.floor(x0); // Floor for integer pixels
+  const safeY0 = isNaN(y0) ? 0 : Math.floor(y0);
+  const safeX1 = isNaN(x1) ? 0 : Math.ceil(x1); // Ceiling for integer pixels
+  const safeY1 = isNaN(y1) ? 0 : Math.ceil(y1);
   
   // Ensure width and height are non-negative
   const width = Math.max(0, safeX1 - safeX0);
   const height = Math.max(0, safeY1 - safeY0);
   
-  return {
+  // Handle both string (backward compatibility) and object color result
+  let backgroundColor = 'transparent';
+  let borderColor: string | undefined;
+  let borderWidth: number | undefined;
+  
+  if (typeof colorResult === 'string') {
+    backgroundColor = colorResult;
+  } else {
+    backgroundColor = colorResult.backgroundColor;
+    borderColor = colorResult.borderColor;
+    borderWidth = colorResult.borderWidth;
+  }
+  
+  const style: React.CSSProperties = {
     position: "absolute",
     borderRadius: `${borderRadius}px`,
-    backgroundColor: backgroundColor || 'transparent',
+    backgroundColor,
     width,
     height,
     transform: `translate(${safeX0}px, ${safeY0}px)`,
@@ -64,6 +77,17 @@ export const getStaticNodeStyle = (
     overflow: "hidden",
     boxSizing: "border-box",
   };
+  
+  // Apply border if borderColor is provided
+  if (borderColor) {
+    // Create a small gap between nodes to prevent border overlap
+    style.width = width - 1;
+    style.height = height - 1;
+    style.border = `${borderWidth || 1}px solid ${borderColor}`;
+    style.margin = '0.5px';
+  }
+  
+  return style;
 };
 
 // Children Node Styles
@@ -72,25 +96,38 @@ export const getChildNodeStyle = (
   y0: number,
   x1: number,
   y1: number,
-  backgroundColor: string | undefined,
+  colorResult: { backgroundColor: string; borderColor?: string; borderWidth?: number } | string,
   borderRadius: number,
   animationDuration: number,
   index: number
 ): React.CSSProperties => {
   // Only replace with 0 if the value is NaN or undefined, otherwise keep the original value
-  const safeX0 = isNaN(x0) ? 0 : x0;
-  const safeY0 = isNaN(y0) ? 0 : y0;
-  const safeX1 = isNaN(x1) ? 0 : x1;
-  const safeY1 = isNaN(y1) ? 0 : y1;
+  const safeX0 = isNaN(x0) ? 0 : Math.floor(x0); // Floor for integer pixels
+  const safeY0 = isNaN(y0) ? 0 : Math.floor(y0);
+  const safeX1 = isNaN(x1) ? 0 : Math.ceil(x1); // Ceiling for integer pixels
+  const safeY1 = isNaN(y1) ? 0 : Math.ceil(y1);
   
   // Ensure width and height are non-negative
   const width = Math.max(0, safeX1 - safeX0);
   const height = Math.max(0, safeY1 - safeY0);
   
-  return {
+  // Handle both string (backward compatibility) and object color result
+  let backgroundColor = 'transparent';
+  let borderColor: string | undefined;
+  let borderWidth: number | undefined;
+  
+  if (typeof colorResult === 'string') {
+    backgroundColor = colorResult;
+  } else {
+    backgroundColor = colorResult.backgroundColor;
+    borderColor = colorResult.borderColor;
+    borderWidth = colorResult.borderWidth;
+  }
+  
+  const style: React.CSSProperties = {
     position: "absolute",
     borderRadius: `${borderRadius}px`,
-    backgroundColor: backgroundColor || 'transparent',
+    backgroundColor,
     width,
     height,
     transform: `translate(${safeX0}px, ${safeY0}px) scale(0.8)`,
@@ -102,6 +139,17 @@ export const getChildNodeStyle = (
     animation: `fade-in-scale ${animationDuration}ms forwards ${index * 30}ms cubic-bezier(0.4, 0, 0.2, 1)`,
     willChange: "opacity, transform",
   };
+  
+  // Apply border if borderColor is provided
+  if (borderColor) {
+    // Create a small gap between nodes to prevent border overlap
+    style.width = width - 1;
+    style.height = height - 1;
+    style.border = `${borderWidth || 1}px solid ${borderColor}`;
+    style.margin = '0.5px';
+  }
+  
+  return style;
 };
 
 // Content Wrapper Styles
@@ -148,7 +196,7 @@ interface InitialFinalStyles {
 export const getExpandingNodeStyles = (
   initialStyles: InitialFinalStyles,
   finalStyles: InitialFinalStyles,
-  backgroundColor: string | undefined,
+  colorResult: { backgroundColor: string; borderColor?: string; borderWidth?: number } | string,
   borderRadius: number,
   contentScale: number,
   animationPhase: string,
@@ -168,16 +216,39 @@ export const getExpandingNodeStyles = (
   // Ensure contentScale is a valid number between 0.1 and 1
   const safeContentScale = isNaN(contentScale) ? 0.85 : Math.min(Math.max(0.1, contentScale), 1);
   
+  // Handle both string (backward compatibility) and object color result
+  let backgroundColor = 'transparent';
+  let borderColor: string | undefined;
+  let borderWidth: number | undefined;
+  
+  if (typeof colorResult === 'string') {
+    backgroundColor = colorResult;
+  } else {
+    backgroundColor = colorResult.backgroundColor;
+    borderColor = colorResult.borderColor;
+    borderWidth = colorResult.borderWidth;
+  }
+  
   // Common styles for all animation phases
   const commonStyles: React.CSSProperties = {
     position: "absolute",
     borderRadius: `${borderRadius}px`,
-    backgroundColor: backgroundColor || 'transparent', // Provide a fallback
+    backgroundColor, // Provide a fallback
     zIndex: 200,
     overflow: "hidden",
     boxSizing: "border-box",
     willChange: "transform, width, height",
   };
+  
+  // Apply border if borderColor is provided
+  if (borderColor) {
+    commonStyles.border = `${borderWidth || 1}px solid ${borderColor}`;
+    
+    // Hide border in showing-children phase to prevent double borders
+    if (animationPhase === 'showing-children') {
+      commonStyles.border = 'none';
+    }
+  }
   
   if (animationPhase === 'expanding') {
     // During expansion - animate from initial to final size
@@ -216,6 +287,7 @@ export const getExpandingNodeStyles = (
         ...style,
         transition: `opacity ${animationDuration / 2}ms cubic-bezier(0.4, 0, 0.2, 1)`,
         opacity: 0,
+        pointerEvents: 'none', // Prevent interaction while fading out
       };
     }
     
