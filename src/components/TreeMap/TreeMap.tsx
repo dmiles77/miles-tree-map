@@ -150,9 +150,17 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     if (!tooltipEnabled) return;
 
     if (e.type === 'mouseenter' || e.type === 'mousemove') {
+      // Get mouse position relative to the TreeMap container
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      
+      // Calculate position relative to the container
+      const relativeX = e.clientX - rect.left;
+      const relativeY = e.clientY - rect.top;
+      
       setTooltip({
-        x: e.clientX,
-        y: e.clientY,
+        x: relativeX,
+        y: relativeY,
         data: node.data,
       });
     } else if (e.type === 'mouseleave') {
@@ -375,6 +383,8 @@ export const TreeMap: React.FC<TreeMapProps> = ({
           customTooltipPosition={customTooltipPosition} 
           customTooltipStyle={customTooltipStyle} 
           tooltipComponentRender={tooltipComponentRender} 
+          containerWidth={dimensions.width}
+          containerHeight={dimensions.height}
         />
       )}
     </div>

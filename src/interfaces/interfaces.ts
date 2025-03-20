@@ -20,6 +20,10 @@ export interface ICustomNodeProps {
 export interface ICustomTooltipProps {
   node: TreeNode;
   position?: XYPosition;
+  containerWidth?: number;
+  containerHeight?: number;
+  calculatedPosition?: { left: number; top: number };
+  tooltipPosition?: TooltipPosition;
 }
 
 export interface Position {

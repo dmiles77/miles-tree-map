@@ -18,6 +18,8 @@ interface TooltipProps {
   tooltipComponentRender?: (
     customTooltipProps: ICustomTooltipProps
   ) => React.ReactNode;
+  containerWidth?: number;
+  containerHeight?: number;
 }
 
 const Tooltip: React.FC<TooltipProps> = ({
@@ -26,11 +28,15 @@ const Tooltip: React.FC<TooltipProps> = ({
   customTooltipPosition,
   customTooltipStyle,
   tooltipComponentRender,
+  containerWidth,
+  containerHeight
 }) => {
   const tooltipPosition = getTooltipPositionStyle(
     position.x,
     position.y,
-    customTooltipPosition
+    customTooltipPosition,
+    containerWidth,
+    containerHeight
   );
   
   const tooltipStyle = getTooltipStyle(tooltipPosition, customTooltipStyle);
@@ -38,7 +44,14 @@ const Tooltip: React.FC<TooltipProps> = ({
   return (
     <div style={tooltipStyle}>
       {tooltipComponentRender ? (
-        tooltipComponentRender({node, position})
+        tooltipComponentRender({
+          node, 
+          position,
+          containerWidth,
+          containerHeight,
+          calculatedPosition: tooltipPosition,
+          tooltipPosition: customTooltipPosition
+        })
       ) : (
         <>
           <strong>{node.name}</strong> <br />

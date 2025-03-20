@@ -3,10 +3,9 @@
 ![Component Preview](https://raw.githubusercontent.com/dmiles77/miles-tree-map/refs/heads/main/Animation.gif)
 
 A powerful and customizable TreeMap visualization component for React, featuring infinite drill-down capabilities, smooth animations, and extensive customization options. This component is not just a chart, it's a responsive layout that can render custom components within each node, providing a dynamic and interactive user experience.
-basically render any thing you want based on the data structure.
+Basically render anything you want based on the hierarchical data structure.
 
 ## 📦 Installation
-
 
 You can install the package via NPM:
 
@@ -177,7 +176,7 @@ const worldMap = {
   ]
 };
 
-const Example: react.FC = () => {
+const Example: React.FC = () => {
     const data: TreeNode = worldMap;
     return (
         <div style={{width: '100vw', height: '100vh'}}>
@@ -185,7 +184,6 @@ const Example: react.FC = () => {
         </div>
     )
 }
-
 ```
 In this example, the worldMap object represents the hierarchical data structure to be visualized. The TreeMap component renders this data, providing an interactive and responsive layout.
 
@@ -198,18 +196,19 @@ Note: The TreeNode interface defines the structure of each node in the tree, inc
 |------|------|---------|-------------|
 | `data` | `TreeNode` | Required | Hierarchical data structure for the tree map |
 | `renderComponent` | `(props: ICustomNodeProps) => JSX.Element` | `undefined` | Custom component for node rendering |
-| `colorRange` | `string[]` | `['#ff6b6b', '#4ecdc4']` | Colors used for node visualization |
-| `colorRangeBehavior` | `ColorRangeBehavior` | `'oneColor'` | Color distribution strategy |
+| `colorRange` | `string[]` | `['#4ecdc4', '#ff6b6b']` | Colors used for node visualization |
+| `colorRangeBehavior` | `ColorRangeBehavior` | `'heatmap'` | Color distribution strategy |
 | `onNodeClick` | `(node: TreeNode) => void` | `undefined` | Callback for node click events |
-| `animationDuration` | `number` | `300` | Duration of transitions in ms |
+| `animationDuration` | `number` | `500` | Duration of transitions in ms |
 | `breadcrumbEnabled` | `boolean` | `true` | Show navigation breadcrumbs |
 | `backButtonEnabled` | `boolean` | `true` | Show back button in nodes |
-| `padding` | `number` | `1` | Spacing between nodes |
+| `paddingInner` | `number` | `10` | Spacing between nodes |
+| `paddingOuter` | `number` | `50` | Spacing around the treemap |
 | `borderRadius` | `number` | `2` | Node corner radius |
-| `minDisplayValue` | `number` | `0` | Minimum value for node display |
 | `tooltipEnabled` | `boolean` | `true` | Enable hover tooltips |
 | `customTooltipPosition` | `TooltipPosition` | `'mouseRight'` | Tooltip positioning |
-| `tooltipComponentRender` | `(ICustomTooltipProps) => JSX.Element` | `undefined` | Custom tooltip component |
+| `customTooltipStyle` | `React.CSSProperties` | `undefined` | Custom tooltip styling |
+| `tooltipComponentRender` | `(props: ICustomTooltipProps) => JSX.Element` | `undefined` | Custom tooltip component |
 
 ## 🎨 Color Range Behaviors
 
@@ -227,7 +226,11 @@ The `colorRangeBehavior` prop supports these options:
 ## 📍 Tooltip Positions
 
 Available `customTooltipPosition` options:
-- Mouse-following: `mouseRight`, `mouseLeft`, `mouseTop`, `mouseBottom`
+- `mouseRight`: Tooltip appears to the right of the cursor
+- `mouseTop`: Tooltip appears above the cursor
+- `mouseBottom`: Tooltip appears below the cursor
+
+All tooltip positions are automatically adjusted to stay within the TreeMap container's boundaries.
 
 ## 🎯 Custom Components
 
@@ -237,87 +240,77 @@ To render custom content within each node, you can provide a renderComponent pro
 
 ```tsx
 import React from "react";
-import { TreeMap, TreeNode, CustomNodeProps } from "miles-tree-map";
+import { TreeMap, TreeNode, ICustomNodeProps } from "miles-tree-map";
 
-const CustomNode: React.FC<CustomNodeProps> = ({ node, width, height, backgroundColor }) => (
-  <div style={{ width, height, backgroundColor, padding: '5px', boxSizing: 'border-box' }}>
-    <strong>{node.name}</strong>
-    {node.customData && <p>{node.customData.description}</p>}
-  </div>
-);
-
-const data: TreeNode = {
-  id: "root",
-  name: "Root",
-  children: [
-    {
-      id: "child1",
-      name: "Child 1",
-      value: 10,
-      customData: { description: "This is child 1" }
-    },
-    {
-      id: "child2",
-      name: "Child 2",
-      value: 20,
-      customData: { description: "This is child 2" }
-    }
-  ]
+const CustomNode: React.FC<{ componentProps: ICustomNodeProps }> = ({ componentProps }) => {
+  const { node, width, height, backgroundColor, borderColor, borderWidth, handleBack, history } = componentProps;
+  
+  return (
+    <div style={{ 
+      width: `${width}px`, 
+      height: `${height}px`, 
+      backgroundColor,
+      border: borderColor ? `${borderWidth || 1}px solid ${borderColor}` : 'none',
+      padding: '5px', 
+      boxSizing: 'border-box' 
+    }}>
+      <strong>{node.name}</strong>
+      {node.customData && <p>{node.customData.description}</p>}
+    </div>
+  );
 };
 
 const App: React.FC = () => (
-  <TreeMap data={data} renderComponent={CustomNode} />
+  <TreeMap 
+    data={data} 
+    renderComponent={(props) => <CustomNode componentProps={props} />} 
+  />
 );
 
 export default App;
-
 ```
 
 ### Custom Tooltip Component
 
-For a customized tooltip, you can provide a renderTooltip prop to the TreeMap component. This prop should be a function that returns a JSX element representing the tooltip.
+For a customized tooltip, you can provide a tooltipComponentRender prop to the TreeMap component. This function receives enhanced positioning information to help you create perfectly positioned tooltips.
 
 ```tsx
-interface ICustomTooltipProps {
-  node: TreeNode;
-  position?: XYPosition;
-}
+<TreeMap
+  data={data}
+  tooltipComponentRender={(props) => {
+    const { 
+      node, 
+      position,            // Raw mouse position
+      containerWidth,      // TreeMap container width
+      containerHeight,     // TreeMap container height
+      calculatedPosition,  // Pre-calculated optimal position (boundary-aware)
+      tooltipPosition      // User preference (mouseRight, mouseTop, etc.)
+    } = props;
+    
+    return (
+      <div style={{ 
+        position: 'absolute',
+        left: calculatedPosition?.left,
+        top: calculatedPosition?.top,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        color: 'white',
+        padding: '10px',
+        borderRadius: '5px',
+        maxWidth: '250px'
+      }}>
+        <h3>{node.name}</h3>
+        {node.customData && (
+          <pre style={{ margin: "0", whiteSpace: "pre-wrap" }}>
+            {JSON.stringify(node.customData, null, 2)}
+          </pre>
+        )}
+      </div>
+    );
+  }}
+/>
 ```
 
-```tsx
-      <TreeMap
-        data={data}
-        tooltipComponentRender={(customTooltipProps: ICustomTooltipProps) => {
-          const { node, position } = customTooltipProps;
-          console.log(node, position);
-          return (
-            <>
-            <strong>{node.name} 1111</strong> <br />
-            {node.customData && (
-              <pre style={{ margin: "0", whiteSpace: "pre-wrap" }}>
-                {JSON.stringify(node.customData, null, 2)}
-              </pre>
-              )}
-            </>
-          );
-        }}
-      />
-```
-
-Here, CustomTooltip is a component that receives TooltipData and styles, rendering the node's customData within a styled tooltip. The renderTooltip prop is set to a function that returns this CustomTooltip component.
-
-## 🛠️ Underlying Libraries
-
-The miles-tree-map component leverages several libraries to provide its functionality:
-
-React: A JavaScript library for building user interfaces, enabling the creation of reusable UI components.
-
-D3.js: A powerful library for producing dynamic, interactive data visualizations in web browsers. Specifically, miles-tree-map utilizes the d3-hierarchy module, which offers tools for visualizing hierarchical data structures, such as treemaps. 
-
-TypeScript: A statically typed superset of JavaScript that compiles to plain JavaScript, providing optional static typing and class-based object-oriented programming.
-
-By combining these technologies, miles-tree-map offers a robust and flexible solution for rendering interactive and customizable treemap visualizations in React applications.
-
+The enhanced tooltip props provide both raw positioning data and boundary-aware calculated positions, giving you maximum flexibility for custom tooltips.
 
 ## 📊 Data Structure
 
@@ -333,24 +326,40 @@ interface TreeNode {
 
 ## 🌟 Features
 
-- Infinite drill-down navigation
-- Smooth animations and transitions
-- Breadcrumb navigation
-- Customizable tooltips
-- Multiple color schemes
-- Responsive layout
-- Custom node rendering
-- Back navigation
-- Flexible positioning system
-- Rich customization options
+- Infinite drill-down navigation with smooth transitions
+- Breadcrumb navigation for easy backtracking
+- Smart tooltips with boundary-aware positioning
+- Multiple color schemes including border-only mode
+- Responsive layout that adapts to container size
+- Custom component rendering for both nodes and tooltips
+- React 16.8+ support through 19.0.0
+- TypeScript support with comprehensive type definitions
+- Customizable animation timing and transitions
+- Optimized rendering for large datasets
 
-For more information and access to the source code, visit the [GitHub repository](https://github.com/dmiles77/miles-tree-map)
+## 🔄 Recent Updates
 
-Note: Ensure that your project meets the peer dependency requirements for React and TypeScript to utilize miles-tree-map effectively.
+- **Enhanced Tooltip System**: Tooltips now respect container boundaries and provide comprehensive positioning information to custom tooltip renderers
+- **Improved Border-Only Mode**: Fixed issues with the `borderOnly` color behavior to properly display node borders
+- **React 19 Support**: Added compatibility with React 19.0.0
+- **Performance Improvements**: Enhanced rendering efficiency for large datasets
+- **Border Style Props**: Added support for custom border colors and widths in node components
 
-## Support
+## 🛠️ Underlying Libraries
 
-Found a bug or want to add a feature? let me know please: danielmiles89@gmail.com
+The miles-tree-map component leverages several libraries to provide its functionality:
+
+- **React**: A JavaScript library for building user interfaces, enabling the creation of reusable UI components.
+- **D3.js**: A powerful library for producing dynamic, interactive data visualizations in web browsers. Specifically, miles-tree-map utilizes the d3-hierarchy module for treemap layouts.
+- **TypeScript**: A statically typed superset of JavaScript that provides optional static typing and class-based object-oriented programming.
+
+## ⚙️ Compatibility
+
+Compatible with React versions 16.8.0 through 19.0.0.
+
+## 📧 Support
+
+Found a bug or want to add a feature? Please contact: dmiles.apps@gmail.com
 
 ## 📜 License
 

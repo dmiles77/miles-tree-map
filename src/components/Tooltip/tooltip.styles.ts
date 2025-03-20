@@ -5,24 +5,51 @@ import { TooltipPosition } from '../../interfaces/interfaces';
 export const getTooltipPositionStyle = (
   xPos: number,
   yPos: number,
-  tooltipPosition: TooltipPosition
+  tooltipPosition: TooltipPosition,
+  containerWidth?: number,
+  containerHeight?: number
 ): { left: number; top: number } => {
-  const positions = {
-    mouseRight: {
-      left: xPos + 10,
-      top: yPos + 0,
-    },
-    mouseBottom: {
-      left: xPos - 100,
-      top: yPos + 20,
-    },
-    mouseTop: {
-      left: xPos + 10,
-      top: yPos - 100,
-    },
+  // Default offsets
+  const OFFSET_X = 10;
+  const OFFSET_Y = 10;
+  const TOOLTIP_WIDTH = 200; // Approximate width
+  const TOOLTIP_HEIGHT = 100; // Approximate height
+  
+  // Base positions
+  let position = {
+    left: xPos + OFFSET_X,
+    top: yPos
   };
   
-  return positions[tooltipPosition];
+  // Adjust based on tooltip position preference
+  switch (tooltipPosition) {
+    case 'mouseRight':
+      position = { left: xPos + OFFSET_X, top: yPos };
+      break;
+    case 'mouseBottom':
+      position = { left: xPos - (TOOLTIP_WIDTH / 2), top: yPos + OFFSET_Y };
+      break;
+    case 'mouseTop':
+      position = { left: xPos + OFFSET_X, top: yPos - TOOLTIP_HEIGHT - OFFSET_Y };
+      break;
+    default:
+      position = { left: xPos + OFFSET_X, top: yPos };
+  }
+  
+  // Ensure tooltip doesn't go outside container bounds
+  if (containerWidth && containerHeight) {
+    // Adjust horizontal position if needed
+    if (position.left + TOOLTIP_WIDTH > containerWidth) {
+      position.left = Math.max(0, xPos - TOOLTIP_WIDTH - OFFSET_X);
+    }
+    
+    // Adjust vertical position if needed
+    if (position.top + TOOLTIP_HEIGHT > containerHeight) {
+      position.top = Math.max(0, yPos - TOOLTIP_HEIGHT - OFFSET_Y);
+    }
+  }
+  
+  return position;
 };
 
 // Base tooltip styles
