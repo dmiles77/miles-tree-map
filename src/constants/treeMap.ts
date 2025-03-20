@@ -6,6 +6,18 @@ export const TREE_MAP_CONSTANTS = {
     BREADCRUMB_BACKGROUND: 'rgba(255, 255, 255, 0.9)',
     BREADCRUMB_TEXT: '#007bff'
   },
+  WILD_COLOR_SCHEMES: [
+    // Vibrant
+    ['#FF3366', '#FF6633', '#FFCC33', '#33CC33', '#3366FF', '#CC33FF'],
+    // Ocean
+    ['#003F5C', '#2F4B7C', '#665191', '#A05195', '#D45087', '#F95D6A', '#FF7C43', '#FFA600'],
+    // Forest
+    ['#1E5631', '#4E9525', '#8ABA4F', '#D4E6B5', '#97D8C4', '#4B8F8C', '#2F5233'],
+    // Sunset
+    ['#F94144', '#F3722C', '#F8961E', '#F9C74F', '#90BE6D', '#43AA8B', '#577590'],
+    // Pastel
+    ['#FFADAD', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BF6FF', '#A0C4FF', '#BDB2FF', '#FFC6FF']
+  ],
   ANIMATION: {
     DEFAULT_DURATION: 500
   },
@@ -26,7 +38,8 @@ export const TREE_MAP_CONSTANTS = {
     TRANSPARENT: 'transparent',
     BORDER_ONLY: 'borderOnly',
     RANDOM: 'random',
-    PATTERN_FILL: 'patternFill',
+    RANDOM_RANGE_COLOR: 'randomRangeColor',
+    WILD: 'wild',
     HEATMAP: 'heatmap'
   },
   BREADCRUMBS_HEIGHT: 40,

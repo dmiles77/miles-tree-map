@@ -218,8 +218,10 @@ The `colorRangeBehavior` prop supports these options:
 - `gradient`: Smooth transition between colors based on value
 - `discrete`: Distinct colors from the range
 - `transparent`: No background color
-- `borderOnly`: Only node borders
-- `patternFill`: Striped pattern using the color range
+- `borderOnly`: Only shows colored borders around nodes with transparent backgrounds; creates a "wireframe" look
+- `random`: Selects a single random color from predefined color schemes; all nodes get the same color
+- `randomRangeColor`: Creates a gradient using the first and last colors from a randomly selected predefined color scheme
+- `wild`: Selects one of five predefined color schemes (Vibrant, Ocean, Forest, Sunset, or Pastel) and assigns each node a random color from that scheme
 - `heatmap`: Value-based color intensity
 
 ## 📍 Tooltip Positions

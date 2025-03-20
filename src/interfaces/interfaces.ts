@@ -29,7 +29,7 @@ export interface Position {
   y1: number;
 }
 
-export type ColorRangeBehavior = "oneColor" | "gradient" | "discrete" | "transparent" | "borderOnly" | "patternFill" | "heatmap";
+export type ColorRangeBehavior = "oneColor" | "gradient" | "discrete" | "transparent" | "borderOnly" | "random" | "randomRangeColor" | "wild" | "heatmap";
 
 export type TooltipPosition = 
   | 'mouseRight' 
