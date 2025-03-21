@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TreeNode } from '../../interfaces/interfaces';
 import {
   getNodeContainerStyle,
   backButtonStyle,
+  backButtonHoverStyle,
+  backButtonActiveStyle,
   nodeNameStyle,
-  nodeValueStyle
+  nodeValueStyle,
+  getExpandingTextStyle
 } from './defaultNode.styles';
 
 interface DefaultNodeProps {
@@ -17,6 +20,7 @@ interface DefaultNodeProps {
   handleBack: (index: number) => void;
   history: Array<TreeNode>;
   backButtonEnabled: boolean;
+  isExpanding?: boolean;
 }
 
 const DefaultNode: React.FC<DefaultNodeProps> = ({ 
@@ -28,8 +32,12 @@ const DefaultNode: React.FC<DefaultNodeProps> = ({
   borderWidth, 
   handleBack, 
   history, 
-  backButtonEnabled, 
+  backButtonEnabled,
+  isExpanding = false
 }) => {
+    const [isHovering, setIsHovering] = useState(false);
+    const [isActive, setIsActive] = useState(false);
+    
     // Recursive function to calculate total value of node and all its descendants
     const calcNodeValue = (node: { value?: number; children?: any[] }): number => {
         if (!node.children?.length) {
@@ -48,21 +56,45 @@ const DefaultNode: React.FC<DefaultNodeProps> = ({
         containerStyle.border = `${borderWidth || 1}px solid ${borderColor}`;
     }
 
+    // Get text styles that support animation during expansion
+    const expandingTextStyle = getExpandingTextStyle(isExpanding);
+    const combinedNameStyle = { ...nodeNameStyle, ...expandingTextStyle };
+    const combinedValueStyle = { ...nodeValueStyle, ...expandingTextStyle };
+    
+    // Combine button styles based on state
+    const currentButtonStyle = {
+        ...backButtonStyle,
+        ...(isHovering ? backButtonHoverStyle : {}),
+        ...(isActive ? backButtonActiveStyle : {})
+    };
+
     return (
         <div style={containerStyle}>
-            {history.length > 0 && backButtonEnabled && (
+            {history.length > 0 && backButtonEnabled && !isExpanding && (
               <button
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   handleBack(history.length - 1);
                 }}
-                style={backButtonStyle}
+                style={currentButtonStyle}
+                aria-label="Go back"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => {
+                  setIsHovering(false);
+                  setIsActive(false);
+                }}
+                onMouseDown={() => setIsActive(true)}
+                onMouseUp={() => setIsActive(false)}
+                onTouchStart={() => setIsActive(true)}
+                onTouchEnd={() => setIsActive(false)}
               >
-                ↩
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))' }}>
+                  <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </button>
             )}
-            <span style={nodeNameStyle}>{node.name}</span>
-            <span style={nodeValueStyle}>{nodeValue}</span>
+            <span style={combinedNameStyle}>{node.name}</span>
+            <span style={combinedValueStyle}>{nodeValue}</span>
         </div>
     );
 };

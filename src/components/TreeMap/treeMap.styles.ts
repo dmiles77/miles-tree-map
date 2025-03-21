@@ -173,11 +173,11 @@ export const getNodeContentWrapperStyle = (
   
   if (isExpanding) {
     if (animationPhase === 'expanding') {
-      wrapperStyle.animation = `content-adjust ${animationDuration}ms forwards cubic-bezier(0.4, 0, 0.2, 1)`;
+      // For expanding phase, don't animate the entire content, just scale the text elements
+      // This ensures that positioned elements like the back button stay in place
       wrapperStyle.transformOrigin = 'center';
-      wrapperStyle.willChange = 'transform';
     } else if (animationPhase === 'expanded' || animationPhase === 'showing-children') {
-      wrapperStyle.transform = `scale(var(--content-scale, 1))`;
+      // Maintain transform properties but don't scale the whole wrapper
       wrapperStyle.transformOrigin = 'center';
     }
   }

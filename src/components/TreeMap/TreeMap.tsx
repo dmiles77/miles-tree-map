@@ -185,7 +185,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     }
   };
 
-  const renderNodeContent = (node: TreeNode, width: number | string | undefined, height: number | string | undefined, backgroundColor: string | undefined) => {
+  const renderNodeContent = (node: TreeNode, width: number | string | undefined, height: number | string | undefined, backgroundColor: string | undefined, isExpanding: boolean = false) => {
     // Convert width and height to numbers for calculations if they're strings
     const numWidth = typeof width === 'string' ? parseFloat(width) : (width || 0);
     const numHeight = typeof height === 'string' ? parseFloat(height) : (height || 0);
@@ -212,6 +212,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
         handleBack={handleBack}
         history={history}
         backButtonEnabled={!!backButtonEnabled}
+        isExpanding={isExpanding}
       />
     );
   };
@@ -315,7 +316,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
     
     return (
       <div style={wrapperStyle}>
-        {renderNodeContent(node, width, height, backgroundColor)}
+        {renderNodeContent(node, width, height, backgroundColor, isExpanding)}
       </div>
     );
   };
@@ -364,7 +365,7 @@ export const TreeMap: React.FC<TreeMapProps> = ({
             key={`expanding-${clickedNode.data.id}`}
             style={expandingNodeStyle}
           >
-            {renderNodeContentWithWrapper(clickedNode.data, expandingNodeStyle.width as number, expandingNodeStyle.height as number, expandingNodeStyle.backgroundColor)}
+            {renderNodeContentWithWrapper(clickedNode.data, expandingNodeStyle.width as number, expandingNodeStyle.height as number, expandingNodeStyle.backgroundColor, true)}
           </div>
         )}
 
