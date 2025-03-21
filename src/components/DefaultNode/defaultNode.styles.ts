@@ -20,27 +20,26 @@ export const getNodeContainerStyle = (width: number, height: number, backgroundC
 // Back Button Styles
 export const backButtonStyle: React.CSSProperties = {
   position: 'absolute',
-  top: '8px',
-  left: '8px',
-  width: '60px',
-  height: '60px',
+  bottom: '4px',
+  left: '4px',
+  width: '40px',
+  height: '40px',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  fontSize: '28px',
+  fontSize: '18px',
   fontWeight: 'bold',
-  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 100%)',
-  border: '1px solid rgba(255, 255, 255, 0.3)',
+  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.2) 100%)',
+  border: 'none',
   borderRadius: '50%',
   color: '#fff',
   cursor: 'pointer',
   zIndex: 10,
-  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
   transition: 'all 0.2s ease',
   padding: 0,
   outline: 'none',
   lineHeight: 1,
-  backdropFilter: 'blur(4px)',
   textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
   transform: 'translateZ(0)',
   userSelect: 'none',
@@ -48,16 +47,16 @@ export const backButtonStyle: React.CSSProperties = {
 
 // Back Button Hover Style - to be applied in component with useState
 export const backButtonHoverStyle: React.CSSProperties = {
-  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.15) 100%)',
-  boxShadow: '0 6px 12px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-  transform: 'translateY(-1px) translateZ(0)',
+  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%)',
+  transform: 'translateY(-2px) translateZ(0)',
+  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
 };
 
 // Back Button Active Style - to be applied in component with useState
 export const backButtonActiveStyle: React.CSSProperties = {
-  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%)',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-  transform: 'translateY(1px) translateZ(0)',
+  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 100%)',
+  transform: 'translateY(0) translateZ(0)',
+  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
 };
 
 // Node Name Styles

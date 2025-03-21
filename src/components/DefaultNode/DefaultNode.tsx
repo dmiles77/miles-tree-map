@@ -68,9 +68,26 @@ const DefaultNode: React.FC<DefaultNodeProps> = ({
         ...(isActive ? backButtonActiveStyle : {})
     };
 
+    // Determine if we need to adjust content positioning
+    const hasBackButton = history.length > 0 && backButtonEnabled && !isExpanding;
+
     return (
         <div style={containerStyle}>
-            {history.length > 0 && backButtonEnabled && !isExpanding && (
+            <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                width: '100%',
+                height: '100%',
+                // Add bottom padding when back button is present to avoid overlap
+                paddingBottom: hasBackButton ? '40px' : '0'
+            }}>
+                <span style={combinedNameStyle}>{node.name}</span>
+                <span style={combinedValueStyle}>{nodeValue}</span>
+            </div>
+            
+            {hasBackButton && (
               <button
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
@@ -88,13 +105,11 @@ const DefaultNode: React.FC<DefaultNodeProps> = ({
                 onTouchStart={() => setIsActive(true)}
                 onTouchEnd={() => setIsActive(false)}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.3))' }}>
                   <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
             )}
-            <span style={combinedNameStyle}>{node.name}</span>
-            <span style={combinedValueStyle}>{nodeValue}</span>
         </div>
     );
 };
