@@ -2,6 +2,8 @@
 
 ![Component Preview](https://raw.githubusercontent.com/dmiles77/miles-tree-map/refs/heads/main/Animation.gif)
 
+**[Live Demo](https://dmiles77.github.io/miles-tree-map-live/)** - Check out the interactive demo to see the component in action!
+
 A powerful and customizable TreeMap visualization component for React, featuring infinite drill-down capabilities, smooth animations, and extensive customization options. This component is not just a chart, it's a responsive layout that can render custom components within each node, providing a dynamic and interactive user experience.
 Basically render anything you want based on the hierarchical data structure.
 
